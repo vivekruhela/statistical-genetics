@@ -3,6 +3,7 @@ channels: [conda-forge, bioconda]
 dependencies:
   - r-base=4.4
   - r-data.table
+  - r-r.utils
   - r-plotly
   - r-htmlwidgets
   - r-susier
