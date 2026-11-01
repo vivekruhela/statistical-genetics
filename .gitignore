@@ -1,0 +1,10 @@
+# Built data stays out of git (published to Zenodo instead)
+data/*
+!data/eur_yri_samples.txt
+!data/README.md
+results/
+*.Rhistory
+.Rproj.user/
+__pycache__/
+.pytest_cache/
+*.pyc

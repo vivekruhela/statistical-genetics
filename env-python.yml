@@ -1,0 +1,21 @@
+name: statgen-py
+channels: [conda-forge, bioconda]
+dependencies:
+  - python=3.12
+  - numpy>=2
+  - pandas
+  - scipy
+  - statsmodels
+  - scikit-learn
+  - plotly
+  - pysam
+  - msprime
+  - tskit
+  - stdpopsim
+  - pyslim
+  - slim>=4
+  - pydeseq2
+  - pytest
+  - pip
+  - pip:
+      - bed-reader

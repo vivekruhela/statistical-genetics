@@ -1,0 +1,16 @@
+name: statgen-r
+channels: [conda-forge, bioconda]
+dependencies:
+  - r-base=4.4
+  - r-data.table
+  - r-plotly
+  - r-htmlwidgets
+  - r-susier
+  - r-coloc
+  - r-matrixeqtl
+  - r-testthat
+  - r-jsonlite
+  - bioconductor-deseq2
+  - plink2
+  - bcftools
+  - htslib
