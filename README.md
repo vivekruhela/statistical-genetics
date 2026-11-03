@@ -83,7 +83,7 @@ The steps, if you want to run them one by one:
 |---|---|---|
 | 0 | `00_fetch_metadata.sh` | sample sex and population, GWAS template people, GENCODE v39 genes |
 | 1 | `01_fetch_genotypes.sh` | `data/genotypes/chrN.bcf`, biallelic SNVs with MAF >= 1% |
-| 2 | `02_fetch_geuvadis.sh` | GEUVADIS gene counts (from EBI) |
+| 2 | `02_fetch_geuvadis.sh` | GEUVADIS sample sheet and gene counts (from EBI BioStudies, md5 checked) |
 | 3 | `03_prepare_expression.{R,py}` | one library per person, gene filter, size factors, log2, inverse normal, expression PCs |
 | 4 | `04_genotypes_to_plink.sh` | PLINK 2 files, genotype PCs, dosage tables for the scan |
 | 5 | `05_pick_loci.{R,py}` | genome-wide cis-eQTL scan (lead and conditional second signal per gene), `loci.tsv` |
