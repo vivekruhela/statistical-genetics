@@ -22,6 +22,9 @@ genes = pd.read_csv(f"{expr_dir}/genes.tsv", sep="\t")
 expr = pd.read_csv(f"{expr_dir}/expression_int.tsv.gz", sep="\t", index_col=0)[samples["sample"]]
 epcs = pd.read_csv(f"{expr_dir}/expression_pcs.tsv", sep="\t", index_col=0)
 gpcs = pd.read_csv(f"{plink_dir}/cohort_pca.eigenvec", sep="\t", index_col=0)
+no_geno = sorted(set(samples["sample"]) - set(gpcs.index))
+if no_geno:
+    sys.exit("no genotypes (so no genotype PCs) for: " + ", ".join(no_geno) + "\nRerun from step 0 so step 3 leaves them out.")
 covar = np.column_stack([
     (samples["sex"] == "male").astype(float).to_numpy(),
     gpcs.loc[samples["sample"]].iloc[:, :cfg["genotype"]["n_pcs"]].to_numpy(),
