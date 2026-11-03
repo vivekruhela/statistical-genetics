@@ -28,8 +28,10 @@ awk -F'\t' -v OFS='\t' '
           $col["hgdp_tgp_meta.Genetic.region"],sex,rel }' \
   "$OUT/gnomad_meta_updated.tsv" > "$OUT/panel_samples.tsv"
 
+# A few people are in the gnomAD metadata but not in the released phased panel; their QC fields
+# are all NA (related = NA). Keep only cohort candidates that are actually in the panel.
 awk -F'\t' -v OFS='\t' 'NR==FNR {want[$1]=1; next}
-  FNR==1 {print; next} ($1 in want) {print}' "$SAMPLES" "$OUT/panel_samples.tsv" \
+  FNR==1 {print; next} ($1 in want) && $6!="NA" {print}' "$SAMPLES" "$OUT/panel_samples.tsv" \
   > "$OUT/cohort_samples.tsv"
 
 # GWAS templates: unrelated, not in the cohort, not admixed (ASW, ACB) and not the deeply
@@ -40,5 +42,5 @@ awk -F'\t' 'NR==FNR {want[$1]=1; next} FNR>1 && !($1 in want) && $6=="false" && 
   $3!~/^(ASW|ACB|San|BiakaPygmy|MbutiPygmy)$/ {print $1}' \
   "$SAMPLES" "$OUT/panel_samples.tsv" > "$OUT/gwas_templates_AFR.txt"
 
-echo "cohort candidates found in panel metadata: $(($(wc -l < "$OUT/cohort_samples.tsv")-1)) of $(wc -l < "$SAMPLES")"
+echo "cohort candidates in the released panel: $(($(wc -l < "$OUT/cohort_samples.tsv")-1)) of $(wc -l < "$SAMPLES")"
 echo "GWAS templates: EUR $(wc -l < "$OUT/gwas_templates_EUR.txt"), AFR $(wc -l < "$OUT/gwas_templates_AFR.txt")"

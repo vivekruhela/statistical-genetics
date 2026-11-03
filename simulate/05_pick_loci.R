@@ -17,6 +17,9 @@ emat <- emat[, samples$sample]
 epcs <- fread(file.path(expr_dir, "expression_pcs.tsv"))
 gpcs <- fread(file.path(plink_dir, "cohort_pca.eigenvec"))
 setnames(gpcs, 1, "sample")
+no_geno <- setdiff(samples$sample, gpcs$sample)
+if (length(no_geno)) stop("no genotypes (so no genotype PCs) for: ", paste(no_geno, collapse = ", "),
+                          "\nRerun from step 0 so step 3 leaves them out.")
 covar <- cbind(
   sex = as.numeric(samples$sex == "male"),
   as.matrix(gpcs[match(samples$sample, sample), -1])[, seq_len(cfg$genotype$n_pcs), drop = FALSE],
