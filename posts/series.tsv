@@ -1,0 +1,21 @@
+id	part	lane	x	y	publish	slug	title	question	after
+0	Setup	shared	0	0	2026-11-14	finemap-00-series-map-and-setup	Series map and setup	What is fine-mapping for, and how do I set up the code and data?	
+R	Setup	shared	0	1	2026-11-21	finemap-r-reference-panels	Reference panels: which one, when, how	Which reference panel should I use for PCA, imputation, LD or eQTL lookups?	0
+1.1	Part 1: data	shared	1	0	2026-11-28	finemap-1-1-meet-the-cohort	Meet the cohort	What files and formats describe one person across genotypes, expression, clinical data and methylation?	0;R
+1.2	Part 1: data	shared	2	0	2026-12-05	finemap-1-2-genotype-qc	Genotype QC	Which variants and people should I remove, and why?	1.1
+1.3	Part 1: data	shared	3	0	2026-12-12	finemap-1-3-population-structure	Population structure and relatedness	How does ancestry confound association, and how do I correct for it?	1.2
+2.1	Part 2: GWAS and ROH	gwas	4	1	2026-12-19	finemap-2-1-first-gwas	GWAS: your first association test	How do I test every variant for a trait and read a Manhattan plot?	1.3
+2.2	Part 2: GWAS and ROH	gwas	5	1	2026-12-26	finemap-2-2-ld	LD: why the top SNP may not be causal	Why does one causal variant light up a whole tower of hits?	2.1
+2.3	Part 2: GWAS and ROH	gwas	6	1	2027-01-09	finemap-2-3-hits-to-loci	From hits to loci	How do I turn significant variants into independent loci?	2.2
+2.4	Part 2: GWAS and ROH	gwas	5	2	2027-04-17	finemap-2-4-roh-calling	ROH I: finding runs of homozygosity	What is a run of homozygosity, and how do callers compare?	2.2
+2.5	Part 2: GWAS and ROH	gwas	6	2	2027-04-24	finemap-2-5-roh-association	ROH II: ancestry-aware ROH and association	Why does ROH length depend on ancestry, and can ROH burden explain a trait?	2.4
+3.1	Part 3: expression	expression	4	-1	2027-01-16	finemap-3-1-rnaseq-to-matrix	RNA-seq to an expression matrix	How do raw counts become a matrix I can test?	1.3
+3.2	Part 3: expression	expression	5	-1	2027-01-23	finemap-3-2-differential-expression	Differential expression	Which genes differ between cases and controls, and does that make them causal?	3.1
+3.3	Part 3: expression	expression	6	-1	2027-02-06	finemap-3-3-eqtl-mapping	eQTL mapping	Which variants change a gene's expression?	3.1
+4.1	Part 4: fine-mapping	shared	7	0	2027-02-13	finemap-4-1-bayes-factors	Fine-mapping I: Bayes factors and credible sets	With one causal variant, how sure can I be which one it is?	2.3;3.3
+4.2	Part 4: fine-mapping	shared	8	0	2027-02-27	finemap-4-2-susie	Fine-mapping II: SuSiE	How do I fine-map a locus with several causal variants?	4.1
+4.3	Part 4: fine-mapping	shared	9	0	2027-03-06	finemap-4-3-functional-priors	Fine-mapping III: functional priors	Can methylation and annotations sharpen the credible sets?	4.2
+5.1	Part 5: integration	shared	10	0	2027-03-13	finemap-5-1-colocalization	Colocalization	Do the GWAS and eQTL signals share one causal variant?	4.2
+5.2	Part 5: integration	shared	11	0	2027-03-20	finemap-5-2-smr-heidi	SMR and HEIDI	Does expression of the gene cause the trait, or is it linkage?	5.1
+5.3	Part 5: integration	shared	12	0	2027-03-27	finemap-5-3-twas-methylation	TWAS and the methylation layer	Can predicted expression and methylation trace the chain from variant to trait?	5.2
+6	Capstone	shared	13	0	2027-04-10	finemap-6-capstone	Capstone: one locus end to end	Can the whole pipeline find the causal gene at a new locus?	5.3;4.3
