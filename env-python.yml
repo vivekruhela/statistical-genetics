@@ -9,13 +9,15 @@ dependencies:
   - scikit-learn
   - plotly
   - pysam
+  - pytest
+  - plink2
+  - bcftools
   - msprime
   - tskit
   - stdpopsim
   - pyslim
   - slim>=4
   - pydeseq2
-  - pytest
   - pip
   - pip:
       - bed-reader

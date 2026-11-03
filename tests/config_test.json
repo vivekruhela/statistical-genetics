@@ -1,0 +1,6 @@
+{
+  "_base": "config/cohort.json",
+  "_note": "Test settings: the chr22-only test data must still yield 10 loci, and the GWAS cohort is smaller.",
+  "loci": {"max_loci_per_chr": 10, "min_gap_bp": 200000, "min_lead_mlog10p": 3, "min_variants": 500},
+  "gwas_cohort": {"n": {"EUR": 3000, "AFR": 1000}}
+}
