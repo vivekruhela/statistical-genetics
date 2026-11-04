@@ -92,6 +92,7 @@ function isDark() {
 function paint() {
   var d = isDark(), ink = d ? %s : %s, cols = d ? %s : %s;
   document.body.style.background = 'transparent';
+  document.documentElement.style.colorScheme = d ? 'dark' : 'light';
   var n = gd.data.length;
   for (var k = 1; k < n; k++) {
     var pub = gd.data[k].customdata.map(function (u) { return !!u; });
@@ -105,6 +106,7 @@ function paint() {
 }
 paint();
 if (window.matchMedia) window.matchMedia('(prefers-color-scheme: dark)').addEventListener('change', paint);
+try { new MutationObserver(paint).observe(window.parent.document.documentElement, {attributes: true, attributeFilter: ['data-theme']}); } catch (err) {}
 """ % (list(INK["dark"]), list(INK["light"]), [c[2] for c in LANES.values()], [c[1] for c in LANES.values()])
 
 fig.write_html(out, include_plotlyjs="cdn", full_html=True, post_script=post_script,
