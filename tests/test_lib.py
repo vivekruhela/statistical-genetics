@@ -74,3 +74,15 @@ def test_dag_unit_variance():
     edges = pd.DataFrame({"from": ["a"], "to": ["b"], "weight": [np.sqrt(0.3)], "center": [0.0]})
     v = sg.simulate_dag(nodes, edges, {}, 20000, rng)
     assert abs(v["b"].var() - 1) < 0.03 and abs(stats.pearsonr(v["a"], v["b"])[0] ** 2 - 0.3) < 0.03
+
+
+def test_read_geuvadis_counts(tmp_path):
+    # GEUVADIS layout: versioned TargetID, three info columns, one column per library;
+    # HG1 has two libraries and the deeper one is kept
+    p = tmp_path / "counts.txt"
+    pd.DataFrame({"TargetID": ["ENSG1.5", "ENSG2.1"], "Gene_Symbol": ["ENSG1.5", "ENSG2.1"],
+                  "Chr": ["1", "2"], "Coord": [10, 20],
+                  "HG1.1.M_1": [1, 2], "HG1.2.M_2": [10, 20], "HG2.1.M_3": [3, 4]}).to_csv(p, sep="\t", index=False)
+    m = sg.read_geuvadis_counts(p)
+    assert m.index.name == "gene_id" and list(m.index) == ["ENSG1", "ENSG2"]
+    assert list(m.columns) == ["HG1", "HG2"] and m.loc["ENSG1", "HG1"] == 10
