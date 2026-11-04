@@ -1,6 +1,6 @@
 ---
 title: "Statistical fine-mapping, post 0: series map and setup"
-date: 2026-11-14
+date: 2026-11-04
 type: method
 summary: "What fine-mapping is for, a map of the 20-post series, and how to build the one cohort every post uses: real genotypes and expression with a simulated answer key."
 tags: ["fine-mapping", "GWAS", "eQTL", "statistical genetics", "tutorial"]
@@ -62,7 +62,7 @@ The same map as a list, in reading order:
 
 | Post | Part | Question | Planned |
 |---|---|---|---|
-| 0 | Setup | What is fine-mapping for, and how do I set up the code and data? | 14 Nov 2026 |
+| 0 | Setup | What is fine-mapping for, and how do I set up the code and data? | 4 Nov 2026 |
 | R | Setup | Which reference panel should I use for PCA, imputation, LD or eQTL lookups? | 21 Nov 2026 |
 | 1.1 | Data | What files and formats describe one person across genotypes, expression, clinical data and methylation? | 28 Nov 2026 |
 | 1.2 | Data | Which variants and people should I remove, and why? | 5 Dec 2026 |
