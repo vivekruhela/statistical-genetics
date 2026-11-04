@@ -54,9 +54,10 @@ The series builds up to that, one method per post, on one dataset.
 
 Each circle is a post. The genotype lane (GWAS, then runs of homozygosity) runs above the shared
 trunk and the expression lane runs below it, and the two meet in fine-mapping. Filled circles are
-published and open when clicked. Hover over a circle to see the question that post answers.
+published and open when clicked. Hover over or tap a circle to see the question that post answers.
+On a phone, swipe the map sideways to see all of it.
 
-<iframe src="/finemap/00/series-map.html" title="Series map: 20 posts in six parts" width="100%" height="480" style="border:0;" loading="lazy"></iframe>
+<iframe src="/finemap/00/series-map.html" title="Series map: 20 posts in six parts" width="100%" height="490" style="border:0;" loading="lazy"></iframe>
 
 The same map as a list, in reading order:
 

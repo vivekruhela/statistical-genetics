@@ -104,6 +104,8 @@ function paint() {
   var ann = (gd.layout.annotations || []).map(function (a) { a.font.color = ink[1]; return a; });
   Plotly.relayout(gd, {'font.color': ink[0], 'legend.font.color': ink[0], annotations: ann});
 }
+// on a narrow screen keep the map at full size and let it scroll sideways
+if (window.innerWidth < 720) { document.body.style.overflowX = 'auto'; document.body.style.margin = '0'; Plotly.relayout(gd, {width: 720}); }
 paint();
 if (window.matchMedia) window.matchMedia('(prefers-color-scheme: dark)').addEventListener('change', paint);
 try { new MutationObserver(paint).observe(window.parent.document.documentElement, {attributes: true, attributeFilter: ['data-theme']}); } catch (err) {}
