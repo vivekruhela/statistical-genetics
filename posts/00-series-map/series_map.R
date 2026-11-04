@@ -78,6 +78,7 @@ js <- sprintf("function (gd) {
   function paint() {
     var d = isDark(), ink = d ? %s : %s, cols = d ? %s : %s;
     document.body.style.background = 'transparent';
+    document.documentElement.style.colorScheme = d ? 'dark' : 'light';
     for (var k = 1; k < gd.data.length; k++) {
       var c = cols[k - 1], cd = [].concat(gd.data[k].customdata);
       Plotly.restyle(gd, {'marker.color': [cd.map(function (u) { return u ? c : ink[3]; })],
@@ -89,6 +90,7 @@ js <- sprintf("function (gd) {
   }
   paint();
   if (window.matchMedia) window.matchMedia('(prefers-color-scheme: dark)').addEventListener('change', paint);
+  try { new MutationObserver(paint).observe(window.parent.document.documentElement, {attributes: true, attributeFilter: ['data-theme']}); } catch (err) {}
 }", jsonlite::toJSON(ink$dark), jsonlite::toJSON(ink$light), jsonlite::toJSON(lanes$dark), jsonlite::toJSON(lanes$light))
 fig <- onRender(fig, js)
 

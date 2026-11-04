@@ -7,7 +7,7 @@ all run on one cohort with genotypes, expression, clinical traits and methylatio
 Every step has an R version (the main track) and a Python version next to it. Where a step is
 deterministic, both produce the same numbers, and the tests check that they do.
 
-Status: the data build (steps 0 to 9) is written and tested on chromosome 22. The blog posts'
+Status: the data build (steps 0 to 9) is built genome-wide and passes all tests, in R and in Python. The blog posts'
 own code will be added post by post.
 
 ## What the data are
