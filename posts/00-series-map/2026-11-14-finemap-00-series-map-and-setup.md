@@ -4,7 +4,7 @@ date: 2026-11-14
 type: method
 summary: "What fine-mapping is for, a map of the 20-post series, and how to build the one cohort every post uses: real genotypes and expression with a simulated answer key."
 tags: ["fine-mapping", "GWAS", "eQTL", "statistical genetics", "tutorial"]
-draft: true
+draft: false
 ---
 
 [![Code](https://img.shields.io/badge/code-GitHub-181717?logo=github)](https://github.com/vivekruhela/statistical-genetics)
