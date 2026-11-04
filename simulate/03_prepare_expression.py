@@ -33,7 +33,7 @@ sg.write_tsv(samples, f"{out}/samples.tsv")
 with open(f"{out}/samples.txt", "w") as fh:
     fh.write("\n".join(samples["sample"]) + "\n")
 sg.write_tsv(sg.matrix_table(counts[counts.index.isin(genes.gene_id)], "gene_id"), f"{out}/counts_all.tsv.gz")
-sg.write_tsv(genes.set_index("gene_id").loc[norm["int"].index].reset_index(), f"{out}/genes.tsv")
+sg.write_tsv(genes.set_index("gene_id").loc[norm["int"].index].rename_axis("gene_id").reset_index(), f"{out}/genes.tsv")
 sg.write_tsv(pd.DataFrame({"sample": norm["size_factors"].index, "size_factor": norm["size_factors"].to_numpy()}),
              f"{out}/size_factors.tsv")
 sg.write_tsv(sg.matrix_table(norm["int"], "gene_id"), f"{out}/expression_int.tsv.gz")

@@ -67,6 +67,7 @@ def read_geuvadis_counts(path):
     libs = [c for c in d.columns if c not in info_cols]
     m = d[libs].astype(float)
     m.index = d.iloc[:, 0].astype(str).str.replace(r"\..*", "", regex=True)
+    m.index.name = "gene_id"
     m = m[~m.index.duplicated()]
     ind = pd.Series([c.split(".")[0] for c in libs])
     depth = m.sum(axis=0).to_numpy()
