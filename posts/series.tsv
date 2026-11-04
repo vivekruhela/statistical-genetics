@@ -1,5 +1,5 @@
 id	part	lane	x	y	publish	slug	title	question	after
-0	Setup	shared	0	0	2026-11-14	finemap-00-series-map-and-setup	Series map and setup	What is fine-mapping for, and how do I set up the code and data?	
+0	Setup	shared	0	0	2026-11-04	finemap-00-series-map-and-setup	Series map and setup	What is fine-mapping for, and how do I set up the code and data?	
 R	Setup	shared	0	1	2026-11-21	finemap-r-reference-panels	Reference panels: which one, when, how	Which reference panel should I use for PCA, imputation, LD or eQTL lookups?	0
 1.1	Part 1: data	shared	1	0	2026-11-28	finemap-1-1-meet-the-cohort	Meet the cohort	What files and formats describe one person across genotypes, expression, clinical data and methylation?	0;R
 1.2	Part 1: data	shared	2	0	2026-12-05	finemap-1-2-genotype-qc	Genotype QC	Which variants and people should I remove, and why?	1.1
