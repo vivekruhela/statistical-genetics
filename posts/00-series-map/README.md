@@ -13,3 +13,12 @@ python  posts/00-series-map/series_map.py posts/series.tsv series-map.html 2026-
 The date decides which posts are drawn as published. Re-run both on each publish day so the
 newly published node becomes clickable. Without pandoc, the R page keeps its JavaScript in a
 `series-map_files/` folder next to it; the Python page loads Plotly from a CDN.
+
+`ld_tower.py` makes the concept figure (a toy locus: one causal variant, a tower of GWAS hits,
+and the credible set fine-mapping gives). It simulates its own data, so it needs no download:
+
+```bash
+python posts/00-series-map/ld_tower.py ld-tower.html
+```
+
+The page goes in the site's `public/finemap/00/ld-tower.html`.

@@ -1,8 +1,8 @@
 ---
-title: "Statistical fine-mapping, post 0: series map and setup"
+title: "Statistical fine-mapping, post 0: the series map and our playground"
 date: 2026-11-04
 type: method
-summary: "What fine-mapping is for, a map of the 20-post series, and how to build the one cohort every post uses: real genotypes and expression with a simulated answer key."
+summary: "Why the top GWAS hit is often not the cause, what fine-mapping does about it, and the one cohort with a hidden answer key that we'll use for the whole series."
 tags: ["fine-mapping", "GWAS", "eQTL", "statistical genetics", "tutorial"]
 draft: false
 ---
@@ -13,49 +13,87 @@ draft: false
 
 ## Contents
 
-- [Start here: what fine-mapping is for](#start-here-what-fine-mapping-is-for)
-- [The series map](#the-series-map)
-- [Why one cohort with an answer key](#why-one-cohort-with-an-answer-key)
-- [Set up](#set-up)
-- [Build the data](#build-the-data)
-- [Test the build](#test-the-build)
-- [How the data were built](#how-the-data-were-built)
-- [The ten teaching loci](#the-ten-teaching-loci)
+- [A window breaks on a crowded street](#a-window-breaks-on-a-crowded-street)
+- [The same thing happens in our DNA](#the-same-thing-happens-in-our-dna)
+- [What fine-mapping does about it](#what-fine-mapping-does-about-it)
+- [Where we are going](#where-we-are-going)
+- [Our playground: real people, hidden answers](#our-playground-real-people-hidden-answers)
+- [Try it yourself](#try-it-yourself)
 - [Concepts in this post](#concepts-in-this-post)
 - [References](#references)
 
-## Start here: what fine-mapping is for
+## A window breaks on a crowded street
 
-A genome-wide association study (GWAS) tests millions of variants, one at a time, for a link with
-a trait. When it works, it does not give you one variant. It gives you a tower of significant
-variants, sometimes hundreds, all inside a stretch of DNA that is inherited as a block. Those
-variants are correlated with each other through **linkage disequilibrium (LD)**, so each one
-carries some of the signal of the variant that actually does something.
+Picture a busy street. A window breaks, and a camera on the corner shows you everyone who was
+standing near it at that moment. Most of them did nothing. But there is a catch: these people
+always walk around in the same little groups. Wherever the culprit goes, the same five friends are
+right next to them. So every time a window breaks, the camera shows the same faces.
 
-The variant with the smallest p-value is the natural first guess, but it is often not the causal
-one. Its p-value depends on how well it is measured, on its allele frequency, and on chance. The
-causal variant may sit a few places down the list.
+If you only count how often each face shows up near broken windows, the culprit and their friends
+look equally guilty. One of the friends might even score a little higher, just by luck of where
+they were standing. Catching the right person takes a different question. Not "who was near?",
+but "given who always walks with whom, who is most likely to have thrown the stone?"
 
-**Statistical fine-mapping** asks a sharper question: given the association statistics and the LD
-between the variants, how probable is it that each variant is causal? The answer comes as a
-**posterior inclusion probability (PIP)** for each variant, and as **credible sets**: the smallest
-groups of variants that contain a causal variant with, say, 95% probability. A locus with one
-clean signal may give a credible set of two or three variants. A locus with messy LD may give
-thirty.
+That second question is what this whole series is about.
 
-Fine-mapping is the step between "this region matters" and "this gene, through this variant,
-in this tissue". The later posts join it to expression data, which is where the gene comes in:
-colocalization asks whether a GWAS signal and an expression signal share one causal variant, and
-SMR and TWAS ask whether the gene's expression is the route to the trait.
+## The same thing happens in our DNA
 
-The series builds up to that, one method per post, on one dataset.
+In our genomes, the people on the street are genetic variants, and the groups that walk together
+are stretches of DNA that we inherit as blocks. Variants inside a block travel together from
+parent to child, so knowing one of them tells you a lot about its neighbours. Geneticists call
+this **linkage disequilibrium**, or **LD**.
 
-## The series map
+A genome-wide association study (GWAS) is the camera. It tests each variant on its own and asks
+whether people who carry it differ in some trait. When one variant really changes the trait, all
+its travelling companions light up too. You don't get one hit. You get a tower of them.
 
-Each circle is a post. The genotype lane (GWAS, then runs of homozygosity) runs above the shared
-trunk and the expression lane runs below it, and the two meet in fine-mapping. Filled circles are
-published and open when clicked. Hover over or tap a circle to see the question that post answers.
-On a phone, swipe the map sideways to see all of it.
+Here is a small example I simulated, so we know the truth. There are 120 variants, 1,500 people,
+and exactly one variant that changes the trait. I circled it in orange.
+
+<iframe src="/finemap/00/ld-tower.html" title="One causal variant lights up a tower of GWAS hits; fine-mapping narrows it to three" width="100%" height="570" style="border:0;" loading="lazy"></iframe>
+
+Look at the top panel first. Nineteen variants pass the usual genome-wide significance line, and
+the darker the dot, the more tightly it travels with the real cause. The variant with the
+smallest p-value, the "top hit", is not the one I planted. It sits right next door and simply
+got a little luckier in this sample. If you stopped here and wrote "variant 63 causes this trait"
+in a paper, you would be wrong.
+
+## What fine-mapping does about it
+
+Fine-mapping asks the second question from the street: knowing the association signal *and* who
+travels with whom, how likely is each variant to be the real cause?
+
+The answer is one number per variant, the **posterior inclusion probability (PIP)**, shown in the
+bottom panel. Nineteen suspects shrink to a short list. The blue bars are the **95% credible
+set**: the smallest group of variants that, together, contain the real cause with 95%
+probability. Here it has three variants, and the one I planted is among them.
+
+Notice what fine-mapping does *not* do. It doesn't point at a single winner, because the data
+can't honestly tell these three apart. It tells you how uncertain you should be. A clean locus
+gives a credible set of one or two variants; a locus with a big LD block can give thirty. Both
+are useful answers.
+
+For a single causal variant, the PIP of variant $j$ is just its share of the evidence:
+
+$$
+\text{PIP}_j = \frac{\text{BF}_j}{\sum_k \text{BF}_k},
+$$
+
+where $\text{BF}_j$, the Bayes factor, says how much better the data are explained if variant
+$j$ is the cause than if nothing is. Post 4.1 builds this up slowly, and post 4.2 handles loci
+with more than one cause.
+
+Fine-mapping is also where genes come in. If the short list of variants sits inside a stretch of
+DNA that turns a gene up or down, we can start asking whether that gene is the route from DNA to
+disease. That is what the expression half of the series is for.
+
+## Where we are going
+
+Each circle below is one post. The top lane is about genotypes (GWAS, and later runs of
+homozygosity), the bottom lane is about gene expression, and the two meet in fine-mapping.
+Filled circles are published and open when clicked. Hover over or tap a circle to see the
+question that post answers. On a phone, swipe the map sideways to see all of it.
+
 
 <iframe src="/finemap/00/series-map.html" title="Series map: 20 posts in six parts" width="100%" height="490" style="border:0;" loading="lazy"></iframe>
 
@@ -86,114 +124,78 @@ The same map as a list, in reading order:
 
 The two posts on runs of homozygosity branch off the GWAS lane and come last.
 
-## Why one cohort with an answer key
 
-Every post uses the same few hundred people, so each new method can be read against what the
-earlier posts found. And every method can be **scored**, because part of the data is simulated
-from a causal model that is written down.
+## Our playground: real people, hidden answers
 
-This matters for fine-mapping in particular. On real data nobody knows which variant is causal,
-so a credible set can only be judged by whether it looks reasonable. Here the causal variants are
-known, so you can see when a credible set misses, when a colocalization is fooled by LD, and when
-a method is right for the wrong reason.
+On real data, nobody knows which variant is the cause. So you can never be sure whether a
+credible set is right, or just looks reasonable. I wanted a dataset where we *can* check.
 
-The cohort is a hybrid:
+So I built one, like a mystery novel where the author hid the answers at the back of the book.
+The people are real: 443 people from Europe and from the Yoruba in Nigeria, with their real
+genomes (from the HGDP and 1000 Genomes projects) and the real activity of their genes in blood
+cells (from the GEUVADIS project). On top of that, I planted clues. At ten places in the genome I
+chose real variants and made them change a trait, a disease, or the activity of a nearby gene,
+each in a different way. Everything I planted is written down in an answer key, so every method
+in this series can be graded.
 
-| Layer | Where it comes from |
-|---|---|
-| Genotypes | **Real.** The HGDP + 1000 Genomes phased panel, for the GEUVADIS people of European (CEU, FIN, GBR, TSI) and Yoruba (YRI) ancestry |
-| Expression | **Real** GEUVADIS lymphoblastoid RNA-seq counts, plus 10 simulated teaching genes `SIMG01` to `SIMG10` |
-| Clinical | Sex is real. Age, BMI, a quantitative trait and a disease are simulated |
-| Methylation | Simulated CpGs around each teaching gene, plus null CpGs |
-| GWAS summary statistics | Simulated cohorts of 10,000 European and 4,000 African-ancestry people, built from *other* panel people |
-| Answer key | Every causal variant, its effect and the path it acts through |
+Ten places means ten small mysteries, each modelled on a way real loci fool people:
 
-The full build has 443 people with both genotypes and expression. The large GWAS cohorts exist
-because 443 people are too few to detect small genetic effects on a trait; real studies have the
-same problem, which is why fine-mapping usually starts from summary statistics of a large GWAS
-and uses LD from a smaller reference.
+| Mystery | What I planted | Where we solve it |
+|---|---|---|
+| L01 | A variant changes the chemical marks on DNA, which turns a gene down, which changes the trait | posts 4.3, 5.1, 5.3 |
+| L02 | Two separate variants both change a gene; the trait follows the gene | post 4.2 |
+| L03 | One variant changes a gene, a *different* nearby variant changes the trait | posts 5.1, 5.2 |
+| L04 | One variant changes both, through two separate routes | post 5.2 |
+| L05 | A strong effect on the trait, no gene involved | posts 2.1, 5.1 |
+| L06 | A variant changes a gene that has nothing to do with the trait | post 5.1 |
+| L07 | Two variants change the trait, only one of them through a gene | posts 4.2, 5.1 |
+| L08 | A variant changes a gene that raises disease risk | posts 2.1, 5.1 |
+| L09 | A variant that is common in Nigeria and rare in Europe | post 4.3 |
+| L10 | Held back for the capstone, post 6 | post 6 |
 
-## Set up
+Each mystery sits around a real gene (L01 at *ERAP2*, L02 at *SLFN5*, L03 at *SNHG5*, L04 at
+*FLVCR1-DT*, L05 at *ZNF266*, L06 at *POMZP3*, L07 at *CENPU*, L08 at *ARL16*, L09 at a lncRNA on
+chromosome 5), but the stories are made up, so don't read biology into them.
 
-The code is in R, with a full Python version of every step next to it. You need conda or mamba
-(Miniforge is the simplest install). There are two environments, because the R and Python stacks
-pin different NumPy versions:
+Two more pieces make the playground feel like real research. First, 443 people are far too few
+to find small genetic effects, which is also true in real life. So, as in real studies, the big
+GWAS comes from *other* people: 10,000 European and 4,000 African-ancestry genomes that I stitched
+together from short real stretches of DNA, so their LD looks real. Second, the disease also
+changes the activity of 200 genes that have nothing to do with its cause. Those are traps for the
+differential expression post, and I'll let you fall into them first.
+
+## Try it yourself
+
+Everything is in R, with a Python version of every step next to it. You can reproduce the figure
+above in a few seconds, with no data download:
 
 ```bash
 git clone https://github.com/vivekruhela/statistical-genetics
 cd statistical-genetics
-mamba env create -f env-r.yml        # R, PLINK 2 and BCFtools
-mamba env create -f env-python.yml   # Python
+python posts/00-series-map/ld_tower.py ld-tower.html
 ```
 
-The repository layout:
+Change `SEED` or `RHO` at the top of the script and watch the tower and the credible set change.
+With weaker LD (try `RHO = 0.9`) the tower gets thinner and the credible set shrinks. That one
+knob is most of the story of this series.
 
-```
-config/cohort.json      every setting and effect size, in one place
-lib/statgen.{R,py}      shared helpers: normalisation, cis scan, causal graph, association tests
-simulate/               the data build, steps 0 to 9, and run_all.sh
-tests/                  unit tests, data tests, and an R versus Python comparison
-docs/                   how the data were built, in full
-posts/                  code for each post, starting with this one
-```
-
-## Build the data
-
-One command runs every step. Each step skips work that is already done, so a failed run can be
-started again. Try one chromosome first, with a test configuration that loosens the locus rules
-so chromosome 22 alone still gives ten loci:
+To build the whole playground, you need conda or mamba, a machine with a decent connection, and
+about an hour:
 
 ```bash
+mamba env create -f env-r.yml          # R, PLINK 2 and BCFtools
+mamba env create -f env-python.yml     # Python
 conda activate statgen-r
-STATGEN_CONFIG=tests/config_test.json CHROMS="22" bash simulate/run_all.sh data_chr22
+STATGEN_CONFIG=tests/config_test.json CHROMS="22" bash simulate/run_all.sh data_chr22   # a quick trial
+bash simulate/run_all.sh data          # the real build, all chromosomes
+bash tests/run_tests.sh data           # checks the answer key, and that R and Python agree
 ```
 
-Then the real build, on all autosomes:
-
-```bash
-bash simulate/run_all.sh data
-```
-
-On a server with a good connection this takes about an hour: around 20 minutes to download the
-genotypes, 20 to 30 minutes for the genome-wide eQTL scan, and a few minutes for everything else.
-To run the Python versions instead, use `TRACK=python bash simulate/run_all.sh data` from the
-`statgen-py` environment.
-
-## Test the build
-
-```bash
-bash tests/run_tests.sh data
-```
-
-This needs both `Rscript` and `python` on the PATH. It runs the unit tests of the shared helpers
-in both languages, checks that the planted causal effects can be found again in the built data,
-and reruns the expression and eQTL steps in Python to confirm that they give the same numbers as
-R. The steps that draw random numbers (the simulation and the GWAS cohorts) give the same design
-but different draws in the two languages; the R build is the one the posts use.
-
-## How the data were built
-
-<details open>
-<summary><strong>Beginner track</strong>: the idea in five steps</summary>
-
-1. **Take real people.** About 450 people have both whole-genome genotypes and RNA-seq from blood
-   cell lines. Their genotypes and gene expression are kept as they are.
-2. **Find genes with strong real eQTLs.** A scan over every gene finds the ones whose expression
-   depends strongly on a nearby variant. Ten of them, on different chromosomes, become the
-   **teaching loci**.
-3. **Plant a story at each locus.** Next to each real gene, a simulated teaching gene is added.
-   Chosen real variants are made to change it, and through it, or directly, a trait and a disease.
-   Each locus has a different story (the table below).
-4. **Simulate the rest of the person.** Age, BMI, the trait, the disease and methylation are drawn
-   from one causal graph, so every effect has a known size and direction.
-5. **Build a big GWAS.** New genomes are stitched together from short stretches of real
-   haplotypes from other panel people, so their LD looks like real LD. The same causal graph gives
-   them traits, and their association statistics become the GWAS summary statistics.
-
-</details>
+Each step skips work it has already done, so a failed run can simply be started again. The
+`data/truth/` folder is the answer key. Try not to peek until the posts ask you to.
 
 <details>
-<summary><strong>Advanced track</strong>: the details</summary>
+<summary><strong>For the curious</strong>: exactly how the data were built</summary>
 
 **Genotypes.** Biallelic SNVs with minor allele frequency (MAF) of at least 1% in the cohort,
 from the gnomAD HGDP + 1000 Genomes panel, GRCh38, phased with SHAPEIT5. People listed in the
@@ -248,46 +250,19 @@ Every number here is a setting in `config/cohort.json`, and the full description
 
 </details>
 
-## The ten teaching loci
-
-Each locus is a 1.5 Mb window around a real gene with a strong eQTL, and each carries one
-scenario. Which variants are causal is not given here; finding them is the work of the later
-posts. The capstone locus is held back for post 6.
-
-| Locus | Window around | Scenario | What is planted | Main posts |
-|---|---|---|---|---|
-| L01 | *ERAP2* (chr5) | mediated | a variant changes a CpG, the CpG lowers expression, expression changes the trait | 4.3, 5.1, 5.3 |
-| L02 | *SLFN5* (chr17) | two signals | two independent eQTL variants; the trait follows expression | 4.2 |
-| L03 | *SNHG5* (chr6) | linkage | an eQTL at one variant, a trait effect at a different variant in moderate LD with it | 5.1, 5.2 |
-| L04 | *FLVCR1-DT* (chr1) | pleiotropy | one variant acts on expression and on the trait through separate paths | 5.2 |
-| L05 | *ZNF266* (chr19) | GWAS only | a strong direct trait variant, visible even in the small cohort | 2.1, 5.1 |
-| L06 | *POMZP3* (chr7) | eQTL only | an eQTL with no effect on any trait | 5.1 |
-| L07 | *CENPU* (chr4) | two GWAS signals | two trait variants; only one is also an eQTL | 4.2, 5.1 |
-| L08 | *ARL16* (chr17) | binary | an eQTL whose gene raises disease risk | 2.1, 5.1 |
-| L09 | a lncRNA (chr5) | ancestry | an eQTL variant common in YRI and rare in Europeans | 4.3 |
-| L10 | held back | capstone | several signals at once | 6 |
-
-The scenarios are the ways real loci mislead. A GWAS hit next to an eQTL looks like a causal gene
-in L01, L03 and L04, but only L01 is the simple story. L06 is an eQTL that a careless analysis
-would link to the trait. L09 is the case where a credible set from European data is wide and one
-from African-ancestry data is narrow, because LD blocks are shorter in African populations.
-
 ## Concepts in this post
 
-- **Linkage disequilibrium (LD):** the correlation between alleles at nearby variants, because
-  they are inherited together. It is why one causal variant makes many variants significant.
-- **Fine-mapping:** estimating, for each variant in a locus, the probability that it is causal,
-  given the association statistics and the LD.
-- **Posterior inclusion probability (PIP):** that probability, for one variant.
-- **Credible set:** the smallest set of variants that contains a causal variant with a chosen
+- **Linkage disequilibrium (LD):** nearby variants are inherited together, so they are
+  correlated. It is why one cause makes a whole tower of hits.
+- **GWAS:** testing every variant, one at a time, for a link with a trait.
+- **Fine-mapping:** using the association signal and the LD together to estimate how likely each
+  variant is to be the cause.
+- **Posterior inclusion probability (PIP):** that likelihood, for one variant.
+- **Credible set:** the smallest group of variants that contains the cause with a chosen
   probability, often 95%.
-- **eQTL:** a variant associated with the expression level of a gene.
-- **Summary statistics:** per-variant effect estimates and standard errors from a GWAS, shared in
-  place of individual data. Most fine-mapping starts from them.
-- **Reference panel:** a set of sequenced people used to estimate LD, ancestry or missing
-  genotypes for another study. Post R is about choosing one.
-- **Haplotype mosaic:** a simulated genome copied in stretches from real haplotypes, so that its
-  local LD is realistic.
+- **eQTL:** a variant that changes how active a gene is.
+- **Summary statistics:** per-variant results of a GWAS, shared instead of people's data. Most
+  fine-mapping starts from them.
 
 ## References
 
@@ -317,4 +292,4 @@ from African-ancestry data is narrow, because LD blocks are shorter in African p
    *Nature Genetics* 48, 245–252 (2016).
    [doi:10.1038/ng.3506](https://doi.org/10.1038/ng.3506)
 
-*Figures in this post were made for it with the code in `posts/00-series-map/`.*
+*Both figures were made for this post with the code in `posts/00-series-map/`.*
