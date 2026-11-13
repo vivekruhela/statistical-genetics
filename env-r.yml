@@ -14,4 +14,5 @@ dependencies:
   - bioconductor-deseq2
   - plink2
   - bcftools
+  - beagle
   - htslib

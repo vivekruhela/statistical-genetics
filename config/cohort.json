@@ -73,7 +73,7 @@
 
   "gwas_cohort": {
     "n": {"EUR": 10000, "AFR": 4000},
-    "segment_kb": 50,
+    "segment_kb": 500,
     "miscopy_rate": 0.001
   },
 

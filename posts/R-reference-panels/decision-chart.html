@@ -1,0 +1,204 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Which reference panel?</title>
+<!-- Post R, the decision chart. Pick a job and an ancestry; the card says which panel to start
+     from and what to watch out for. Plain HTML, no libraries. Inside the blog it follows the
+     site's light or dark theme; opened on its own it follows the OS setting. Resources change:
+     the advice reflects what was available in November 2026. -->
+<style>
+  :root {
+    --surface: #fcfcfb; --card: #f3f2ee; --ink: #0b0b0b; --ink2: #52514e; --line: #c9c8c2;
+    --accent: #2a78d6; --accent-ink: #ffffff; --warn: #b45309;
+  }
+  :root.dark { --surface: #1a1a19; --card: #262624; --ink: #f0efec; --ink2: #c3c2b7; --line: #4a4a47;
+               --accent: #3987e5; --accent-ink: #0b0b0b; --warn: #f59e0b; }
+  * { box-sizing: border-box; }
+  body { margin: 0; padding: 4px 2px 8px; background: transparent; color: var(--ink);
+         font: 15px/1.5 system-ui, -apple-system, "Segoe UI", sans-serif; }
+  .q { font-size: 13px; font-weight: 600; color: var(--ink2); margin: 10px 0 6px; text-transform: uppercase; letter-spacing: .04em; }
+  .chips { display: flex; flex-wrap: wrap; gap: 6px; }
+  button { font: inherit; font-size: 14px; padding: 6px 12px; border-radius: 999px; cursor: pointer;
+           border: 1px solid var(--line); background: transparent; color: var(--ink); }
+  button[aria-pressed="true"] { background: var(--accent); border-color: var(--accent); color: var(--accent-ink); }
+  button:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+  .card { margin-top: 14px; padding: 14px 16px; border-radius: 10px; background: var(--card); }
+  .card h3 { margin: 0 0 6px; font-size: 16px; }
+  .card p { margin: 6px 0; }
+  .label { font-weight: 600; }
+  .watch { color: var(--ink2); }
+  .watch .label { color: var(--warn); }
+  .foot { margin-top: 8px; font-size: 12px; color: var(--ink2); }
+</style>
+</head>
+<body>
+<div class="q" id="q-task">1. What do you need the panel for?</div>
+<div class="chips" role="group" aria-labelledby="q-task" id="tasks"></div>
+<div class="q" id="q-anc">2. Who is in your study?</div>
+<div class="chips" role="group" aria-labelledby="q-anc" id="ancestries"></div>
+<div class="card" aria-live="polite">
+  <h3 id="title"></h3>
+  <p><span class="label">Start with: </span><span id="use"></span></p>
+  <p><span class="label">Why: </span><span id="why"></span></p>
+  <p class="watch"><span class="label">Watch out: </span><span id="watch"></span></p>
+</div>
+<div class="foot">Reflects resources available in November 2026. Panels get new releases often, so check each one's site.</div>
+<script>
+var TASKS = {
+  pca: "Ancestry map (PCA)",
+  impute: "Imputation",
+  ld: "LD for fine-mapping",
+  local: "Local ancestry",
+  qtl: "eQTL / mQTL lookups"
+};
+var ANC = {
+  eur: "European", afr: "African or African American", eas: "East Asian",
+  sas: "South Asian", amr: "Latino / admixed American", oth: "Other or mixed"
+};
+// advice[task] = {all: {...}, <ancestry>: {...}}; an ancestry entry overrides fields of "all"
+var ADVICE = {
+  pca: {
+    all: {
+      use: "HGDP + 1000 Genomes, the harmonised release from gnomAD: about 4,100 high-coverage genomes from 80 populations, on GRCh38.",
+      why: "It is the most diverse open panel, so whoever is in your study usually has close relatives in it. Compute the PCs in the panel and project your people onto them; computing PCs on panel and study together lets your own sample sizes bend the axes.",
+      watch: "Use the same genome build and the same strand as the panel, keep only common SNPs, and prune LD first, or a few long LD regions will become principal components of their own."
+    },
+    oth: {
+      watch: "Many groups are thin or missing in every open panel (for example much of the Middle East, Oceania and Indigenous America). If yours is one of them, people will sit between clusters: that is the panel's gap, not a sample problem. Same build, same strand, pruned common SNPs."
+    }
+  },
+  impute: {
+    all: {
+      use: "The TOPMed reference panel, through the TOPMed Imputation Server (GRCh38). If you cannot upload data, the open 1000 Genomes 30x panel is the fallback you can run yourself.",
+      why: "Imputation accuracy depends on how many people in the panel carry haplotypes like your people's. TOPMed is the largest public panel and one of the most diverse, and it is what most studies use now.",
+      watch: "Match the build (TOPMed is GRCh38; HRC is GRCh37) and the strand before you upload, then filter imputed variants on the server's quality score (R² of 0.3 for discovery, 0.8 for anything precise). Rare variants impute worst."
+    },
+    eur: {
+      use: "TOPMed. HRC (about 32,000 mostly European genomes, GRCh37, on the Michigan and Sanger servers) is also very good for European ancestry.",
+      why: "Both panels have tens of thousands of European-ancestry haplotypes, so common variants impute almost perfectly; TOPMed does better for rare ones."
+    },
+    afr: {
+      use: "TOPMed, which has the most African-ancestry genomes of the public panels. For continental African cohorts, also try an African panel such as H3Africa (Michigan server) and compare.",
+      why: "African genomes carry more variation and shorter LD blocks than any other group, so they need a larger, well-matched panel. The imputation figure in this post shows what happens with the wrong one."
+    },
+    eas: {
+      use: "TOPMed, compared with an East Asian panel: for example the ChinaMAP or NARD imputation servers, or the GenomeAsia pilot panel on the Michigan server.",
+      why: "TOPMed has relatively few East Asian genomes; panels built from the same population usually win for rare and population-specific variants."
+    },
+    sas: {
+      use: "TOPMed, compared with the GenomeAsia pilot panel (Michigan server), which includes South Asian groups.",
+      why: "South Asians are under-represented in every large panel, so it is worth testing two and keeping the one that imputes your own typed SNPs best."
+    },
+    amr: {
+      use: "TOPMed, which includes many Hispanic and Latino genomes.",
+      why: "Admixed genomes are a patchwork of European, African and Indigenous American segments, and a panel needs all three to fill every patch well."
+    },
+    oth: {
+      use: "TOPMed, or 1000 Genomes 30x plus HGDP, and test both.",
+      why: "When no panel matches well, measure it: hide some typed SNPs, impute them, and see which panel brings them back best. That is exactly the imputation experiment in this post."
+    }
+  },
+  ld: {
+    all: {
+      use: "In-sample LD from the GWAS itself, if the study can share it. If not, a large panel of the same ancestry: LD matrices computed in UK Biobank (European) or Pan-UK Biobank (six ancestry groups).",
+      why: "Summary-statistics fine-mapping, colocalization and conditional analysis all assume the LD matrix describes the same people as the z-scores. Small or mismatched panels create false credible sets and can lose the real ones (the fine-mapping scorecard in this post shows how often).",
+      watch: "Align alleles between the summary statistics and the panel (a single flipped allele can create a fake signal), check the fit with the z-score test from this post before trusting credible sets, and use the same build."
+    },
+    eur: {
+      use: "In-sample LD if you can get it; otherwise UK Biobank LD matrices (hundreds of thousands of European-ancestry people). 1000 Genomes EUR (503 people) is fine for teaching and rough work, not for final credible sets."
+    },
+    afr: {
+      use: "In-sample LD if at all possible. Otherwise the Pan-UK Biobank African-ancestry LD matrices, or a large African-ancestry panel matched to your groups (West, East and South African genomes differ).",
+      why: "LD is shortest and most variable in African genomes, so a mismatched or small panel hurts most here."
+    },
+    eas: {
+      use: "In-sample LD if possible; otherwise Pan-UK Biobank East Asian LD (a few thousand people) or 1000 Genomes EAS (504), with the fit check."
+    },
+    sas: {
+      use: "In-sample LD if possible; otherwise Pan-UK Biobank Central/South Asian LD (several thousand people), with the fit check."
+    },
+    amr: {
+      use: "In-sample LD. Panels for admixed groups are small, and LD in admixed people depends on each cohort's own mix of ancestries, so no external panel matches well.",
+      why: "Two Latino cohorts can have very different shares of European, African and Indigenous American ancestry, and their LD follows those shares."
+    },
+    oth: {
+      use: "In-sample LD. For a meta-analysis across ancestries, fine-map each cohort with its own LD, or use a method built for several ancestries (for example SuSiEx or MESuSiE).",
+      why: "No single panel can match the LD of a mixture of studies; a mixed panel is a mismatched panel, as the fine-mapping example in this post shows."
+    }
+  },
+  local: {
+    all: {
+      use: "Usually not needed. Local ancestry matters for admixed people, whose chromosomes are patchworks of ancestries.",
+      why: "In people without recent admixture, global PCs already describe ancestry well.",
+      watch: "If you do run it, phase with the same panel you use as reference, and use the same build."
+    },
+    afr: {
+      use: "For African Americans and other admixed groups: phased European (1000 Genomes CEU, GBR) and West African (YRI, ESN) references, with a tool such as RFMix or FLARE. For continental Africans it is usually not needed.",
+      why: "Most African-American genomes are a mix of West African and European segments, so those are the two sources to describe."
+    },
+    amr: {
+      use: "Three phased sources: European (1000 Genomes IBS, CEU), African (YRI) and Indigenous American (the HGDP Maya, Pima, Karitiana, Surui and Colombian groups, plus 1000 Genomes PEL people with high Indigenous ancestry). Tools: RFMix, FLARE or G-Nomix.",
+      why: "Indigenous American haplotypes are scarce in most panels, which is why HGDP matters here."
+    },
+    oth: {
+      use: "Phased references for every source population of your people. HGDP + 1000 Genomes is the widest open choice.",
+      why: "Local ancestry calls can only name ancestries the reference contains."
+    }
+  },
+  qtl: {
+    all: {
+      use: "The eQTL Catalogue (dozens of studies and cell types, reprocessed the same way), GTEx v8 (49 tissues, 838 donors), eQTLGen phase 1 (blood, 31,684 people) and, for methylation, GoDMC (blood mQTLs, about 32,000 people).",
+      why: "A GWAS variant that also changes a gene's expression or methylation is a lead for how it acts, which is what colocalization and SMR (posts 5.1 and 5.2) formalise.",
+      watch: "Almost all large QTL studies are mostly of European ancestry. An eQTL can be weaker, absent, or tagged by a different variant in another ancestry, because allele frequencies and LD differ (our locus L09 is built on exactly this)."
+    },
+    afr: {
+      use: "GTEx (about 15% of donors are African American) and the eQTL Catalogue, plus studies of African-American blood such as GALA II/SAGE. GEUVADIS has 89 Yoruba people: real, but small.",
+      why: "There is far less QTL data for African ancestry, so check whether your variant is even common in the QTL study before reading anything into a missing eQTL."
+    },
+    eas: {
+      use: "The eQTL Catalogue and GTEx, plus East Asian studies such as ImmuNexUT (immune cells from Japanese donors)."
+    },
+    sas: {
+      use: "The eQTL Catalogue and GTEx; South Asian QTL data are scarce, so treat a missing eQTL as unknown, not absent."
+    },
+    amr: {
+      use: "The eQTL Catalogue and GTEx, plus GALA II/SAGE, which mapped blood eQTLs in Latino and African-American young people."
+    }
+  }
+};
+
+var state = {task: "ld", anc: "eur"};
+function chipRow(el, items, key) {
+  Object.keys(items).forEach(function (k) {
+    var b = document.createElement("button");
+    b.type = "button"; b.textContent = items[k]; b.dataset.k = k;
+    b.addEventListener("click", function () { state[key] = k; render(); });
+    el.appendChild(b);
+  });
+}
+function render() {
+  document.querySelectorAll("#tasks button").forEach(function (b) { b.setAttribute("aria-pressed", b.dataset.k === state.task); });
+  document.querySelectorAll("#ancestries button").forEach(function (b) { b.setAttribute("aria-pressed", b.dataset.k === state.anc); });
+  var a = Object.assign({}, ADVICE[state.task].all, ADVICE[state.task][state.anc] || {});
+  document.getElementById("title").textContent = TASKS[state.task] + ", " + ANC[state.anc] + " ancestry";
+  document.getElementById("use").textContent = a.use;
+  document.getElementById("why").textContent = a.why;
+  document.getElementById("watch").textContent = a.watch;
+}
+chipRow(document.getElementById("tasks"), TASKS, "task");
+chipRow(document.getElementById("ancestries"), ANC, "anc");
+render();
+
+function isDark() {
+  try { var t = window.parent.document.documentElement.dataset.theme; if (t) return t === "dark"; } catch (err) {}
+  return !!(window.matchMedia && window.matchMedia("(prefers-color-scheme: dark)").matches);
+}
+function paint() { document.documentElement.classList.toggle("dark", isDark()); }
+paint();
+if (window.matchMedia) window.matchMedia("(prefers-color-scheme: dark)").addEventListener("change", paint);
+try { new MutationObserver(paint).observe(window.parent.document.documentElement, {attributes: true, attributeFilter: ["data-theme"]}); } catch (err) {}
+</script>
+</body>
+</html>

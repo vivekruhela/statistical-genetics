@@ -8,3 +8,5 @@ results/
 __pycache__/
 .pytest_cache/
 *.pyc
+# indexes bcftools downloads next to the working directory when it reads the remote panel
+hgdp1kgp_*.csi

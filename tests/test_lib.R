@@ -68,3 +68,37 @@ test_that("the causal graph gives unit-variance nodes", {
   expect_equal(var(v$b), 1, tolerance = 0.03)
   expect_equal(cor(v$a, v$b)^2, 0.3, tolerance = 0.03)
 })
+
+# ---- LD and reference panels (post R) ----
+toy_ld <- function() {
+  p <- 30; n <- 1000
+  R <- 0.9^abs(outer(1:p, 1:p, "-"))
+  b <- rep(0, p); b[8] <- 0.15; b[22] <- -0.12
+  list(R = R, n = n, z = as.vector(sqrt(n) * R %*% b + 0.8 * sin(1:p)))
+}
+
+test_that("ld_matrix gives correlations and NA for a variant that does not vary", {
+  g <- rbind(c(0, 1, 2, 1, 0), c(0, 1, 2, 2, 0), c(1, 1, 1, 1, 1))
+  r <- ld_matrix(g)
+  expect_equal(r[1, 2], cor(g[1, ], g[2, ]))
+  expect_true(all(is.na(r[3, ])))
+})
+
+test_that("an LD matrix survives a round trip to disk", {
+  t <- toy_ld(); f <- tempfile()
+  write_ld(t$R, paste0("v", 1:30), f)
+  r <- read_ld(f)
+  expect_equal(unname(r), t$R, tolerance = 1e-7)
+  expect_equal(rownames(r), paste0("v", 1:30))
+})
+
+test_that("ld_check agrees with susieR's estimate_s_rss and kriging_rss", {
+  skip_if_not_installed("susieR")
+  t <- toy_ld()
+  R2 <- 0.7^abs(outer(1:30, 1:30, "-"))
+  ch <- ld_check(t$z, R2, t$n)
+  k <- suppressWarnings(susieR::kriging_rss(t$z, R2, n = t$n))$conditional_dist
+  expect_equal(ch$s[1], susieR::estimate_s_rss(t$z, R2, t$n), tolerance = 1e-6)
+  expect_equal(ch$expected, k$condmean, tolerance = 1e-6)
+  expect_equal(ch$z_std_diff, k$z_std_diff, tolerance = 1e-6)
+})

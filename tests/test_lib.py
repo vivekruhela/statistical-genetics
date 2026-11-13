@@ -86,3 +86,43 @@ def test_read_geuvadis_counts(tmp_path):
     m = sg.read_geuvadis_counts(p)
     assert m.index.name == "gene_id" and list(m.index) == ["ENSG1", "ENSG2"]
     assert list(m.columns) == ["HG1", "HG2"] and m.loc["ENSG1", "HG1"] == 10
+
+
+# ---- LD and reference panels (post R) ----
+def toy_ld():
+    p, n = 30, 1000
+    i = np.arange(p)
+    R = 0.9 ** np.abs(np.subtract.outer(i, i))
+    b = np.zeros(p)
+    b[7], b[21] = 0.15, -0.12
+    return R, n, np.sqrt(n) * R @ b + 0.8 * np.sin(np.arange(1, p + 1))
+
+
+def test_ld_matrix_and_round_trip(tmp_path):
+    g = np.array([[0, 1, 2, 1, 0], [0, 1, 2, 2, 0], [1, 1, 1, 1, 1]], dtype=float)
+    r = sg.ld_matrix(g)
+    assert abs(r[0, 1] - np.corrcoef(g[0], g[1])[0, 1]) < 1e-12
+    assert np.isnan(r[2]).all()
+    R, _, _ = toy_ld()
+    sg.write_ld(R, [f"v{k}" for k in range(30)], str(tmp_path / "toy"))
+    R2, ids = sg.read_ld(str(tmp_path / "toy"))
+    assert np.allclose(R2, R, atol=1e-7) and ids[3] == "v3"
+
+
+def test_susie_rss_matches_susieR():
+    from susie_rss import susie_rss
+    R, n, z = toy_ld()
+    fit = susie_rss(z, R, n)
+    # susieR 0.14.2: susie_rss(z, R, n = 1000)$pip on the same toy data
+    expect = [0.000200, 0.000257, 0.000234, 0.000456, 0.000674, 0.000657, 0.029513, 0.958001, 0.012094, 0.000954,
+              0.001967, 0.001140, 0.000451, 0.000361, 0.000480, 0.002573, 0.018182, 0.021978, 0.006018, 0.002763,
+              0.007286, 0.193364, 0.547232, 0.176512, 0.009185, 0.000940, 0.000483, 0.000797, 0.002323, 0.002740]
+    assert np.allclose(fit["pip"], expect, atol=2e-6)
+    assert [s["variants"] for s in fit["sets"]] == [[7]]
+
+
+def test_ld_check_on_matching_ld():
+    R, n, z = toy_ld()
+    chk = sg.ld_check(z, R, n)
+    assert chk.s[0] < 1e-6        # the z-scores were made from this R, so it fits
+    assert chk.z_std_diff.abs().max() < 4
