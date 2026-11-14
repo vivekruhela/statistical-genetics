@@ -8,7 +8,9 @@ Every step has an R version (the main track) and a Python version next to it. Wh
 deterministic, both produce the same numbers, and the tests check that they do.
 
 Status: the data build (steps 0 to 9) is built genome-wide and passes all tests, in R and in Python. The blog posts'
-own code will be added post by post.
+own code is added post by post, in `posts/` (post 0: the series map; post R: reference panels). Since post R, step 9
+builds the GWAS genomes from 500 kb stretches instead of 50 kb, so their LD matches real LD; rerun step 9 if your build
+is older (see `posts/R-reference-panels/README.md`).
 
 ## What the data are
 
@@ -110,7 +112,10 @@ table in the same layout, which is how this code was tested.
 
 ```
 config/cohort.json      every setting and effect size, in one place
-lib/statgen.{R,py}      shared helpers (normalisation, cis scan, causal graph, association tests)
+lib/statgen.{R,py}      shared helpers (normalisation, cis scan, causal graph, association tests, LD)
+lib/susie_rss.py        SuSiE-RSS for the Python track (a port of susieR::susie_rss)
+lib/figures.{R,py}      figure helpers; lib/figure_theme.js gives figures the site's light and dark themes
+posts/                  each post's own code, figures and text
 simulate/               the data build, steps 0 to 9, and run_all.sh
 tests/                  unit tests, data tests, R vs Python comparison, mock GEUVADIS
 docs/                   how the data were built

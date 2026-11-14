@@ -328,3 +328,56 @@ assoc_stats <- function(G, y, X, binary = FALSE) {
   data.table(beta = beta, se = se, z = z,
              mlog10p = -(pnorm(-abs(z), log.p = TRUE) + log(2)) / log(10))
 }
+
+# ---- LD and reference panels (post R onward) ---------------------------------------
+
+# Correlation (r, not r^2) between rows of a dosage matrix, variants x people.
+# A variant that does not vary in these people gets NA: the panel cannot say anything about it.
+ld_matrix <- function(g) {
+  u <- unit_rows(g * 1.0)
+  r <- tcrossprod(u)
+  bad <- rowSums(u^2) == 0
+  r[bad, ] <- NA; r[, bad] <- NA
+  diag(r)[!bad] <- 1
+  dimnames(r) <- list(rownames(g), rownames(g))
+  r
+}
+
+# An LD matrix on disk: PREFIX.ld.bin (float32, little endian, p x p) and PREFIX.ld.ids.
+write_ld <- function(r, ids, prefix) {
+  dir.create(dirname(prefix), recursive = TRUE, showWarnings = FALSE)
+  writeLines(ids, paste0(prefix, ".ld.ids"))
+  con <- file(paste0(prefix, ".ld.bin"), "wb")
+  writeBin(as.vector(r), con, size = 4, endian = "little")
+  close(con)
+}
+read_ld <- function(prefix) {
+  ids <- readLines(paste0(prefix, ".ld.ids"))
+  p <- length(ids)
+  con <- file(paste0(prefix, ".ld.bin"), "rb")
+  r <- matrix(readBin(con, "numeric", p * p, size = 4, endian = "little"), p, p)
+  close(con)
+  dimnames(r) <- list(ids, ids)
+  r
+}
+
+# Do these z-scores fit this LD matrix? For each variant, the z-score its neighbours predict
+# (the conditional mean under z ~ N(0, R_s), with R_s = (1 - s) R + s I) and how far the
+# observed z is from it, in standard deviations. s is estimated by maximum likelihood, as in
+# susieR::estimate_s_rss(method = "null-mle"); a value near 0 means R fits the z-scores well.
+# This is the idea behind susieR::kriging_rss and DENTIST.
+ld_check <- function(z, R, n, r_tol = 1e-8) {
+  z[is.na(z)] <- 0
+  z <- sqrt((n - 1) / (z^2 + n - 2)) * z
+  e <- eigen(R, symmetric = TRUE)
+  d <- e$values; d[d < r_tol] <- 0
+  ztv <- as.vector(crossprod(e$vectors, z))
+  nll <- function(s) 0.5 * sum(log((1 - s) * d + s)) + 0.5 * sum(ztv^2 / ((1 - s) * d + s))
+  s <- optimize(nll, c(0, 1), tol = 1.5e-8)$minimum
+  dinv <- 1 / ((1 - s) * d + s)
+  dinv[!is.finite(dinv)] <- 0
+  P <- e$vectors %*% (t(e$vectors) * dinv)
+  pd <- diag(P)
+  Pz <- as.vector(P %*% z)
+  data.table(z = z, expected = z - Pz / pd, sd = sqrt(1 / pd), z_std_diff = Pz / sqrt(pd), s = s)
+}

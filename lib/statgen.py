@@ -338,3 +338,61 @@ def assoc_stats(G, y, X, binary=False):
     z = beta / se
     return pd.DataFrame({"beta": beta, "se": se, "z": z,
                          "mlog10p": -(stats.norm.logsf(np.abs(z)) + math.log(2)) / math.log(10)})
+
+
+# ---- LD and reference panels (post R onward) ---------------------------------------
+
+def ld_matrix(g):
+    """Correlation (r, not r^2) between rows of a dosage array, variants x people.
+
+    A variant that does not vary in these people gets NaN: the panel cannot say anything about it.
+    """
+    u = unit_rows(np.asarray(g, dtype=float))
+    r = u @ u.T
+    bad = (u ** 2).sum(1) == 0
+    r[bad, :] = np.nan
+    r[:, bad] = np.nan
+    r[np.diag_indices_from(r)] = np.where(bad, np.nan, 1.0)
+    return r
+
+
+def write_ld(r, ids, prefix):
+    """An LD matrix on disk: PREFIX.ld.bin (float32, little endian, p x p) and PREFIX.ld.ids."""
+    os.makedirs(os.path.dirname(prefix) or ".", exist_ok=True)
+    with open(prefix + ".ld.ids", "w") as fh:
+        fh.write("\n".join(ids) + "\n")
+    np.asarray(r, dtype="<f4").T.tofile(prefix + ".ld.bin")   # column-major, as R writes it
+
+
+def read_ld(prefix):
+    with open(prefix + ".ld.ids") as fh:
+        ids = fh.read().split()
+    r = np.fromfile(prefix + ".ld.bin", dtype="<f4").astype(float).reshape(len(ids), len(ids)).T
+    return r, ids
+
+
+def ld_check(z, R, n, r_tol=1e-8):
+    """Do these z-scores fit this LD matrix?
+
+    For each variant, the z-score its neighbours predict (the conditional mean under
+    z ~ N(0, R_s), with R_s = (1 - s) R + s I) and how far the observed z is from it, in standard
+    deviations. s is estimated by maximum likelihood, as in susieR::estimate_s_rss(method =
+    "null-mle"); a value near 0 means R fits the z-scores well. This is the idea behind
+    susieR::kriging_rss and DENTIST.
+    """
+    from scipy.optimize import minimize_scalar
+    z = np.nan_to_num(np.asarray(z, dtype=float))
+    z = np.sqrt((n - 1) / (z ** 2 + n - 2)) * z
+    d, v = np.linalg.eigh(R)
+    d = np.where(d < r_tol, 0.0, d)
+    ztv = v.T @ z
+    nll = lambda s: 0.5 * np.sum(np.log((1 - s) * d + s)) + 0.5 * np.sum(ztv ** 2 / ((1 - s) * d + s))
+    with np.errstate(divide="ignore", invalid="ignore"):
+        s = minimize_scalar(nll, bounds=(0, 1), method="bounded", options={"xatol": 1.5e-8}).x
+        dinv = 1 / ((1 - s) * d + s)
+    dinv[~np.isfinite(dinv)] = 0
+    P = (v * dinv) @ v.T
+    pd_ = np.diag(P)
+    Pz = P @ z
+    return pd.DataFrame({"z": z, "expected": z - Pz / pd_, "sd": np.sqrt(1 / pd_),
+                         "z_std_diff": Pz / np.sqrt(pd_), "s": s})

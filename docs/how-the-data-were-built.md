@@ -82,8 +82,10 @@ New people are mosaics of phased haplotypes from panel people who are not in the
 261 unrelated Europeans (1000 Genomes IBS and HGDP Europeans) and 466 unrelated Africans
 (1000 Genomes ESN, GWD, LWK, MSL and HGDP African groups, leaving out the admixed ASW and ACB and
 the deeply diverged San, Biaka and Mbuti). Each new haplotype copies one template and switches to
-another at random breakpoints, on average every 50 kb, miscopying 0.1% of alleles, a simple
-copying model in the spirit of HAPGEN. This keeps real local LD at exactly the cohort's variants.
+another at random breakpoints, on average every 500 kb, miscopying 0.1% of alleles, a simple
+copying model in the spirit of HAPGEN. This keeps real LD at exactly the cohort's variants, out to
+a few hundred kb. (The first build switched every 50 kb, which cut LD beyond about 50 kb and made
+every external LD panel look mismatched; post R found this, and step 9 was rebuilt.)
 Mosaics from a few hundred templates share more long segments than real people do, which is fine
 at single loci but is why the GWAS cohort only covers the teaching loci.
 

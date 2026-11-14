@@ -240,7 +240,7 @@ variant changes a CpG and the CpG lowers expression.
 all far from the loci. These are consequences of disease, not causes, which is the trap the
 differential expression post is about.
 
-**The GWAS cohorts.** Each new genome is a mosaic: for each 50 kb stretch, both haplotypes are
+**The GWAS cohorts.** Each new genome is a mosaic: for each 500 kb stretch (on average), both haplotypes are
 copied from randomly chosen panel people of the same ancestry who are not in the small cohort,
 with a small miscopy rate. LD inside a stretch is real LD. The full build has 10,000 European
 people (2,923 cases) and 4,000 African-ancestry people (1,340 cases).

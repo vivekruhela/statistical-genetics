@@ -12,6 +12,7 @@ dependencies:
   - pytest
   - plink2
   - bcftools
+  - beagle
   - msprime
   - tskit
   - stdpopsim
