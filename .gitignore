@@ -10,3 +10,5 @@ __pycache__/
 *.pyc
 # indexes bcftools downloads next to the working directory when it reads the remote panel
 hgdp1kgp_*.csi
+# Slurm logs from simulate/run_all.sbatch
+statgen-build-*.log

@@ -102,3 +102,23 @@ test_that("ld_check agrees with susieR's estimate_s_rss and kriging_rss", {
   expect_equal(ch$expected, k$condmean, tolerance = 1e-6)
   expect_equal(ch$z_std_diff, k$z_std_diff, tolerance = 1e-6)
 })
+
+test_that("scan_genotypes (block by block) matches read_traw + residualise + unit_rows", {
+  set.seed(4)
+  smp <- LETTERS[1:10]
+  n_var <- 7
+  counted <- ifelse(seq_len(n_var) %% 3 == 1, "A", "G")  # every third row counts REF: must flip
+  d <- data.table(CHR = "chr1", SNP = sprintf("chr1:%d:A:G", 100 * seq_len(n_var)), CM = 0,
+                  POS = 100 * seq_len(n_var), COUNTED = counted, ALT = ifelse(counted == "G", "A", "G"))
+  for (s in smp) d[[paste0("0_", s)]] <- rbinom(n_var, 2, 0.4)
+  f <- tempfile(fileext = ".traw")
+  fwrite(d, f, sep = "\t")
+  ord <- c("J", "C", "A", "H", "B", "E", "D", "G", "F", "I")
+  cv <- matrix(rnorm(20), 10)
+  tr <- read_traw(f)
+  expect <- unit_rows(residualise(tr$g[, ord], cv))
+  got <- scan_genotypes(f, ord, cv, block = 3L)
+  expect_equal(got$info$id, tr$info$id)
+  expect_equal(unname(got$g), unname(expect), tolerance = 1e-12)
+  expect_equal(colnames(got$g), ord)
+})

@@ -68,11 +68,25 @@ STATGEN_CONFIG=tests/config_test.json CHROMS="22" bash simulate/run_all.sh data_
 ```
 
 `tests/config_test.json` loosens the locus rules so chromosome 22 alone still yields 10 loci.
-Then the real build, all autosomes, with `config/cohort.json`:
+Then the real build, all autosomes, with `config/cohort.json`. It is heavy (the scan in step 5
+reads about 6.9 million variants), so run it on a compute node, not a cluster's login/head node,
+which tends to kill long jobs with a bare `Terminated`. With Slurm:
+
+```bash
+sbatch simulate/run_all.sbatch data       # log in statgen-build-<jobid>.log
+```
+
+or interactively, from a shell on a compute node (`srun --mem=14G -c 4 --pty bash`, then
+`conda activate statgen-r`):
 
 ```bash
 bash simulate/run_all.sh data
 ```
+
+If a run stops part way, start again at the step that failed and keep the earlier ones, e.g.
+`FROM=05 bash simulate/run_all.sh data` (or `FROM=05 sbatch simulate/run_all.sbatch data`).
+A plain rerun also works: the download and PLINK steps skip files they already made.
+Memory: step 5 works one chromosome at a time and peaks around 3 GB; 14 GB covers every step.
 
 Expected time on a server with a good connection: about 20 minutes to download genotypes,
 20 to 30 minutes for the genome-wide cis-eQTL scan in step 5, a few minutes for the rest.
@@ -100,8 +114,12 @@ two languages build the same design with different draws; the released dataset i
 ## 3. Test
 
 ```bash
-bash tests/run_tests.sh data     # needs Rscript and python on the PATH
+bash tests/run_tests.sh data     # from either env; also on a compute node (it reruns step 5 in Python)
 ```
+
+The script finds R and Python in the active env and runs the missing language through
+`conda run -n statgen-r` or `conda run -n statgen-py`; set `RSCRIPT=` or `PYTHON=` to override.
+With Slurm, `FROM=10 RUN_TESTS=1 sbatch simulate/run_all.sbatch data` runs only the checks.
 
 This runs unit tests of `lib/` in both languages, checks that the planted truth can be found in
 the built data (`tests/test_data.py`), and reruns steps 3 and 5 in Python to confirm they match

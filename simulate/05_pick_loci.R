@@ -31,18 +31,18 @@ rownames(eres) <- rownames(emat)
 hw <- cfg$loci$half_window_bp
 scan <- list()
 for (f in sort(list.files(file.path(plink_dir, "scan"), pattern = "\\.traw$", full.names = TRUE))) {
-  tr <- read_traw(f)
-  stopifnot(all(samples$sample %in% colnames(tr$g)))
-  tr$g <- tr$g[, samples$sample, drop = FALSE]
+  # residualised, unit-scaled dosages, built block by block to keep memory low (see lib/statgen.R)
+  tr <- scan_genotypes(f, samples$sample, covar)
   chr_name <- tr$info$chr[1]
   gi <- genes[chr == chr_name]
-  if (!nrow(gi)) next
-  gi <- gi[order(gene_id)]
-  gres <- residualise(tr$g, covar)
-  rownames(gres) <- rownames(tr$g)
-  res <- cis_scan(eres[gi$gene_id, , drop = FALSE], gi$tss, gres, tr$info$pos, hw, ncol(covar))
-  cat(sprintf("%s: %d genes scanned\n", chr_name, nrow(res)))
-  scan[[chr_name]] <- res
+  if (nrow(gi)) {
+    gi <- gi[order(gene_id)]
+    res <- cis_scan(eres[gi$gene_id, , drop = FALSE], gi$tss, tr$g, tr$info$pos, hw, ncol(covar),
+                    geno_unit = TRUE)
+    cat(sprintf("%s: %d genes scanned\n", chr_name, nrow(res)))
+    scan[[chr_name]] <- res
+  }
+  rm(tr); invisible(gc())  # free this chromosome before reading the next one
 }
 scan <- rbindlist(scan)
 scan <- merge(genes[, .(gene_id, gene_name, chr, tss)], scan, by = "gene_id")

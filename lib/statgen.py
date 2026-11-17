@@ -167,14 +167,56 @@ def read_traw(path):
     return info, g, samples
 
 
+def scan_genotypes(path, samples, covar, block=20000):
+    """Step 5 reader for a whole chromosome: (variant table, dosages of `samples` in that order,
+    residualised on covar and scaled to unit rows, ready for cis_scan(..., geno_unit=True)).
+
+    Reads the file in blocks of rows and fills one float64 array as it goes, so memory stays near
+    a single copy of the chromosome (chr2: about 2 GB) instead of the six or so copies that
+    read_traw + residualise + unit_rows make together. Rows are independent, so the numbers are
+    the same as the one-shot version.
+    """
+    header = pd.read_csv(path, sep="\t", nrows=0).columns
+    ids = [re.sub(r"^[^_]*_", "", c) for c in header[6:]]
+    missing = sorted(set(samples) - set(ids))
+    if missing:
+        raise ValueError(f"{path} has no genotypes for: {', '.join(missing[:6])}")
+    pos = {s: 6 + i for i, s in enumerate(ids)}
+    cols = [header[pos[s]] for s in samples]
+    with open(path) as fh:
+        n = sum(1 for _ in fh) - 1
+    g = np.empty((n, len(cols)), dtype=float)
+    vids, flips, s = [], [], 0
+    reader = pd.read_csv(path, sep="\t", usecols=list(header[[1, 4]]) + cols, chunksize=block,
+                         dtype={c: np.float32 for c in cols})
+    for d in reader:
+        vid = d[header[1]]
+        flip = (d[header[4]] != vid.str.split(":").str[-1]).to_numpy()
+        x = d[cols].to_numpy(dtype=float)
+        x[flip] = 2 - x[flip]
+        g[s:s + len(d)] = unit_rows(residualise(x, covar))
+        s += len(d)
+        vids.append(vid)
+    assert s == n
+    vid = pd.concat(vids, ignore_index=True)
+    parts = vid.str.split(":", expand=True)
+    info = pd.DataFrame({"id": vid, "chr": parts[0], "pos": parts[1].astype(int),
+                         "ref": parts[2], "alt": parts[3]})
+    return info, g
+
+
 # ---- cis-eQTL scan ---------------------------------------------------------------
 
-def cis_scan(expr_res, gene_ids, gene_tss, geno_res, snp_ids, snp_pos, half_window, n_covar):
-    """Lead cis variant per gene, and the best variant after conditioning on the lead."""
+def cis_scan(expr_res, gene_ids, gene_tss, geno_res, snp_ids, snp_pos, half_window, n_covar,
+             geno_unit=False):
+    """Lead cis variant per gene, and the best variant after conditioning on the lead.
+
+    With geno_unit=True, geno_res is already scaled by unit_rows (as scan_genotypes returns it),
+    which saves two full copies of the genotype matrix."""
     n = expr_res.shape[1]
     df = n - 2 - n_covar
     e = unit_rows(np.asarray(expr_res, dtype=float))
-    g = unit_rows(np.asarray(geno_res, dtype=float))
+    g = geno_res if geno_unit else unit_rows(np.asarray(geno_res, dtype=float))
     snp_pos = np.asarray(snp_pos)
     assert np.all(np.diff(snp_pos) >= 0)
     lo = np.searchsorted(snp_pos, np.asarray(gene_tss) - half_window, side="left")

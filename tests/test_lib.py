@@ -126,3 +126,27 @@ def test_ld_check_on_matching_ld():
     chk = sg.ld_check(z, R, n)
     assert chk.s[0] < 1e-6        # the z-scores were made from this R, so it fits
     assert chk.z_std_diff.abs().max() < 4
+
+
+def _write_traw(path, rng, n_var=7, samples=("A", "B", "C", "D", "E", "F", "G", "H", "I", "J")):
+    g = rng.binomial(2, 0.4, (n_var, len(samples)))
+    ids = [f"chr1:{100 * (i + 1)}:A:G" for i in range(n_var)]
+    counted = ["G" if i % 3 else "A" for i in range(n_var)]  # every third row counts REF: must flip
+    d = pd.DataFrame({"CHR": "chr1", "SNP": ids, "(C)M": 0, "POS": [100 * (i + 1) for i in range(n_var)],
+                      "COUNTED": counted, "ALT": ["A" if c == "G" else "G" for c in counted]})
+    for j, s in enumerate(samples):
+        d[f"0_{s}"] = g[:, j]
+    d.to_csv(path, sep="\t", index=False)
+
+
+def test_scan_genotypes_matches_one_shot(tmp_path):
+    rng = np.random.default_rng(4)
+    f = tmp_path / "chr1.traw"
+    _write_traw(f, rng)
+    order = ["J", "C", "A", "H", "B", "E", "D", "G", "F", "I"]  # a different sample order
+    cv = rng.normal(size=(len(order), 2))
+    info, g, ids = sg.read_traw(f)
+    expect = sg.unit_rows(sg.residualise(g[:, [ids.index(s) for s in order]], cv))
+    info2, g2 = sg.scan_genotypes(f, order, cv, block=3)
+    assert info2["id"].to_list() == info["id"].to_list()
+    assert np.allclose(g2, expect, atol=1e-12)
