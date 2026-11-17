@@ -35,17 +35,17 @@ eres = pd.DataFrame(sg.residualise(expr.to_numpy(), covar), index=expr.index)
 hw = cfg["loci"]["half_window_bp"]
 scan = []
 for f in sorted(glob.glob(f"{plink_dir}/scan/*.traw")):
-    info, g, ids = sg.read_traw(f)
-    g = g[:, [ids.index(s) for s in samples["sample"]]]
+    # residualised, unit-scaled dosages, built block by block to keep memory low (see lib/statgen.py)
+    info, g = sg.scan_genotypes(f, samples["sample"].to_list(), covar)
     chr_name = info["chr"].iloc[0]
     gi = genes[genes.chr == chr_name].sort_values("gene_id")
-    if gi.empty:
-        continue
-    gres = sg.residualise(g, covar)
-    res = sg.cis_scan(eres.loc[gi.gene_id].to_numpy(), gi.gene_id.to_list(), gi.tss.to_numpy(),
-                      gres, info["id"].to_list(), info["pos"].to_numpy(), hw, covar.shape[1])
-    print(f"{chr_name}: {len(res)} genes scanned")
-    scan.append(res)
+    if not gi.empty:
+        res = sg.cis_scan(eres.loc[gi.gene_id].to_numpy(), gi.gene_id.to_list(), gi.tss.to_numpy(),
+                          g, info["id"].to_list(), info["pos"].to_numpy(), hw, covar.shape[1],
+                          geno_unit=True)
+        print(f"{chr_name}: {len(res)} genes scanned")
+        scan.append(res)
+    del info, g  # free this chromosome before reading the next one
 scan = pd.concat(scan)
 scan = genes[["gene_id", "gene_name", "chr", "tss"]].merge(scan, on="gene_id")
 scan = scan.sort_values(["lead_mlog10p", "gene_id"], ascending=[False, True]).reset_index(drop=True)

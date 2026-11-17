@@ -191,7 +191,10 @@ bash simulate/run_all.sh data          # the real build, all chromosomes
 bash tests/run_tests.sh data           # checks the answer key, and that R and Python agree
 ```
 
-Each step skips work it has already done, so a failed run can simply be started again. The
+The real build and the checks are heavy, so on a shared cluster run them on a compute node, not
+the login node (which may stop them with a bare `Terminated`). With Slurm, one line does it:
+`sbatch simulate/run_all.sbatch data`. If a run stops part way, pick up at the step that failed,
+for example `FROM=05 bash simulate/run_all.sh data`; the steps before it are kept. The
 `data/truth/` folder is the answer key. Try not to peek until the posts ask you to.
 
 <details>

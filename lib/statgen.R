@@ -149,16 +149,51 @@ read_traw <- function(path) {
   list(info = info, g = g)
 }
 
+# Step 5 reader for a whole chromosome: the .traw dosages of `samples` (in that order),
+# residualised on `covar` and scaled to unit rows, ready for cis_scan(..., geno_unit = TRUE).
+# It reads and fills one matrix block by block, so memory stays near a single copy of the
+# chromosome (chr2: about 2 GB) instead of the six or so copies that read_traw + residualise + unit_rows
+# make together. Rows are independent, so the numbers are the same as the one-shot version.
+scan_genotypes <- function(path, samples, covar, block = 20000L) {
+  hdr <- names(fread(path, nrows = 0))
+  ids <- sub("^[^_]*_", "", hdr[-(1:6)])
+  missing <- setdiff(samples, ids)
+  if (length(missing)) stop(path, " has no genotypes for: ", paste(head(missing), collapse = ", "))
+  cols <- 6L + match(samples, ids)
+  v <- fread(path, select = c(2L, 5L), col.names = c("id", "counted"))
+  flip <- v$counted != sub(".*:", "", v$id)
+  parts <- tstrsplit(v$id, ":", fixed = TRUE)
+  info <- data.table(id = v$id, chr = parts[[1]], pos = as.integer(parts[[2]]),
+                     ref = parts[[3]], alt = parts[[4]])
+  rm(parts, v)
+  q <- qr(cbind(1, as.matrix(covar)))
+  n <- nrow(info)
+  g <- matrix(0, n, length(samples))
+  for (s in seq(1L, n, by = block)) {
+    i <- s:min(n, s + block - 1L)
+    # skip = s jumps over the header and the s - 1 rows already read
+    x <- as.matrix(fread(path, skip = s, nrows = length(i), header = FALSE, select = cols))
+    storage.mode(x) <- "double"
+    x[flip[i], ] <- 2 - x[flip[i], ]
+    g[i, ] <- unit_rows(t(qr.resid(q, t(x))))
+    rm(x); invisible(gc())  # return this block's scratch memory before the next one
+  }
+  dimnames(g) <- list(info$id, samples)
+  list(info = info, g = g)
+}
+
 # ---- cis-eQTL scan ---------------------------------------------------------------
 
 # For each gene: the lead cis variant, and the best variant after conditioning on the lead.
 # expr_res and geno_res must already be residualised on the same covariates; n_covar is the
 # number of covariate columns used (for degrees of freedom).
-cis_scan <- function(expr_res, gene_tss, geno_res, snp_pos, half_window, n_covar) {
+# With geno_unit = TRUE, geno_res is already scaled by unit_rows() (as scan_genotypes() returns it),
+# which saves two full copies of the genotype matrix.
+cis_scan <- function(expr_res, gene_tss, geno_res, snp_pos, half_window, n_covar, geno_unit = FALSE) {
   n <- ncol(expr_res)
   df <- n - 2 - n_covar
   e <- unit_rows(expr_res)
-  g <- unit_rows(geno_res)
+  g <- if (geno_unit) geno_res else unit_rows(geno_res)
   ord <- order(snp_pos)
   stopifnot(identical(ord, seq_along(snp_pos)))
   lo <- findInterval(gene_tss - half_window - 1, snp_pos) + 1
