@@ -6,6 +6,10 @@ With no file names, every .tsv / .tsv.gz in DIR_R is compared.
 
 Variant ID columns (lead_id, second_id) may differ where several variants are in perfect LD
 and tie to rounding error; those rows pass when every numeric column still agrees.
+
+When two credible sets of one fit share their top variant, two SuSiE effects have caught the same
+signal (a sign of an LD mismatch). How the weight splits between those two effects is not unique,
+so the coverage of those sets is not compared; their sizes, purities and the PIPs still are.
 """
 import os
 import sys
@@ -25,12 +29,19 @@ def compare(a, b):
     if list(x.columns) != list(y.columns) or x.shape != y.shape:
         return f"shape or columns differ: {x.shape} vs {y.shape}"
     worst = 0.0
+    skip = None  # rows whose coverage is not compared (credible sets that share a top variant)
+    if {"coverage", "lead_variant", "locus", "trait", "panel"} <= set(x.columns):
+        skip = x.duplicated(["locus", "trait", "panel", "lead_variant"], keep=False).to_numpy()
+        if skip.any():
+            print(f"     note: {skip.sum()} credible sets share a top variant with another; coverage not compared")
     for c in x.columns:
         if pd.api.types.is_numeric_dtype(x[c]) and pd.api.types.is_numeric_dtype(y[c]):
             xv, yv = x[c].to_numpy(float), y[c].to_numpy(float)
             if c == "lead_r":  # a tied variant in perfect negative LD flips the sign
                 xv, yv = np.abs(xv), np.abs(yv)
-            d = np.nanmax(np.abs(xv - yv) / np.maximum(1, np.abs(xv))) if len(x) else 0
+            if c == "coverage" and skip is not None:
+                xv, yv = xv[~skip], yv[~skip]
+            d = np.nanmax(np.abs(xv - yv) / np.maximum(1, np.abs(xv))) if len(xv) else 0
             if (x[c].isna() != y[c].isna()).any():
                 return f"missing values differ in {c}"
             worst = max(worst, d)
