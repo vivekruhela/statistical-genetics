@@ -76,9 +76,10 @@ for (k in seq_len(nrow(windows))) {
     cs <- if (inherits(fit, "error") || is.null(fit$sets$cs)) list() else fit$sets$cs
     purity <- if (length(cs)) fit$sets$purity$min.abs.corr else numeric(0)
     coverage <- if (length(cs)) fit$sets$coverage else numeric(0)
-    # number the credible sets from left to right, by the position of their top variant
+    # number the credible sets from left to right, by the position of their top variant; when two
+    # sets share a top variant (two effects caught the same signal), the smaller set comes first
     lead <- vapply(cs, function(x) x[which.max(pip[x])], integer(1))
-    o <- order(lead); cs <- cs[o]; purity <- purity[o]; coverage <- coverage[o]
+    o <- order(lead, lengths(cs)); cs <- cs[o]; purity <- purity[o]; coverage <- coverage[o]
     for (j in seq_along(cs)) {
       cs_of[cs[[j]]] <- j
       sets[[length(sets) + 1]] <- data.table(locus = w$locus, trait = w$trait, panel = PANELS[[pn]], cs = j,

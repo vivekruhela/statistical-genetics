@@ -82,8 +82,9 @@ for w in windows.itertuples():
             status = "stopped: z and LD disagree" if "prior variance" in str(e) else "stopped: error"
             pip, cs = np.full(len(z), np.nan), []
         chk = sg.ld_check(z, R, w.n_gwas)
-        # number the credible sets from left to right, by the position of their top variant
-        cs = sorted(cs, key=lambda c: c["variants"][int(np.argmax(pip[c["variants"]]))])
+        # number the credible sets from left to right, by the position of their top variant; when two
+        # sets share a top variant (two effects caught the same signal), the smaller set comes first
+        cs = sorted(cs, key=lambda c: (c["variants"][int(np.argmax(pip[c["variants"]]))], len(c["variants"])))
         cs_of = np.full(len(z), np.nan)
         is_causal = np.isin(ids, list(causal))
         for j, c in enumerate(cs, start=1):
