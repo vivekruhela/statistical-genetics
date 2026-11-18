@@ -1,4 +1,4 @@
-# statistical-genetics
+# Statistical Genetics
 
 Code and data recipes for the statistical genetics blog series on vivekruhela.github.io:
 GWAS, differential expression, eQTL, fine-mapping (SuSiE), colocalization, SMR, TWAS and ROH,
