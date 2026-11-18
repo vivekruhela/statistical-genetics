@@ -4,7 +4,7 @@
 # Pretend our cohort was typed on a genotyping chip: keep only every 10th common variant at each
 # teaching locus, then let Beagle 5 fill the rest back in from a reference panel. Three panels,
 # each made of people who are NOT in the cohort (the GWAS template people from step 8):
-#   EUR   every European-ancestry template person (about 258)
+#   EUR   every European-ancestry template person (about 260)
 #   AFR   the same number of African-ancestry template people (the first ones in the list), so
 #         the two panels differ in ancestry, not in size
 #   BOTH  the two together

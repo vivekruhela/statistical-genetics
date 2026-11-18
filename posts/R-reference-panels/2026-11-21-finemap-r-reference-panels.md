@@ -2,13 +2,10 @@
 title: "Statistical fine-mapping, post R: reference panels, or borrowing other people's genomes"
 date: 2026-11-21
 type: method
-summary: "What a reference panel is, the five jobs it does, and what happens when you borrow from the wrong one: a matched panel fills in genomes and fine-maps a locus well, a mismatched one quietly invents answers."
+summary: "What a reference panel is, the five jobs it does, and what happens when you borrow from the wrong one: a matched panel fills in missing genomes well, but for fine-mapping only LD from the right people will do, and a mismatched panel quietly invents answers."
 tags: ["fine-mapping", "reference panels", "LD", "imputation", "statistical genetics", "tutorial"]
 draft: true
 ---
-
-<!-- Numbers in this draft come from the chromosome 22 test build. Refresh them from
-     results/post-R/*.tsv after the full run (look for the figures quoted in figs 2, 3 and 5). -->
 
 [![Code](https://img.shields.io/badge/code-GitHub-181717?logo=github)](https://github.com/vivekruhela/statistical-genetics/tree/main/posts/R-reference-panels)
 [![Languages](https://img.shields.io/badge/code-R%20%2B%20Python-2f6f9f)](https://github.com/vivekruhela/statistical-genetics)
@@ -99,19 +96,27 @@ Let's pretend our 443 people were typed on a chip. At each of the ten loci I kep
 ten common variants, threw the other nine away, and asked a standard imputation program (Beagle) to
 fill them back in. It does this by matching each person's chip variants to stretches of haplotypes
 in the panel and copying in what those stretches carry. I tried three panels, all made of people who
-are *not* in our cohort: 258 Europeans, 258 Africans, and the two together. Then I compared the
+are *not* in our cohort: about 260 Europeans, the same number of Africans, and the two together. Then I compared the
 filled-in genotypes with the real ones we threw away.
 
 <iframe src="/finemap/R/imputation.html" title="Imputation accuracy by panel, for European and Yoruba people" width="100%" height="440" style="border:0;" loading="lazy"></iframe>
 
 The y-axis is the imputation r²: 1 means the panel brought the variant back perfectly, 0 means it
-had no idea. With a matched panel, common variants come back almost perfectly (r² around 0.9) in
-both groups. With the wrong panel, things fall apart, and they fall apart worst for the Yoruba
-genomes imputed from Europeans: the average r² drops to between 0.1 and 0.5. Those short African
-LD blocks are not in the European notes at all.
+had no idea. With a matched panel, common variants come back almost perfectly: an average r² of 0.90
+to 0.96 for the Europeans and 0.86 to 0.93 for the Yoruba, depending on how common the variant is.
+With the wrong panel, things fall apart, and they fall apart worst for the Yoruba genomes imputed
+from Europeans: for the same common variants, the average r² drops to between 0.2 and 0.6. Those
+short African LD blocks are not in the European notes at all.
+
+The reverse mismatch hurts less. European genomes imputed from the African panel still get an
+average r² of 0.57 to 0.82 for common variants. That is not luck: most haplotypes found in Europe
+also exist somewhere in Africa, where human diversity is greatest, but much of Africa's diversity
+never left. A European panel simply lacks the pieces.
 
 Two more things are worth noticing. Rarer variants are always harder, whatever the panel, because
-fewer panel haplotypes carry them. And the combined panel does as well as the matched one: a good
+fewer panel haplotypes carry them: for Europeans with the matched panel, variants at 1 to 2%
+frequency come back with an r² of only 0.64. And the combined panel does as well as the matched
+one, almost exactly (the two average r² values differ by about 0.01): a good
 imputation program picks the haplotypes that fit each person, so adding more people rarely hurts.
 That is why the big modern panels, like TOPMed, mix many ancestries on purpose. Hold on to that
 thought, because the next job behaves differently.
@@ -128,38 +133,48 @@ So let's take our European GWAS (10,000 people) and fine-map the same z-scores w
 4.2 explains how SuSiE works; here it is a black box) and LD from five sources:
 
 - **the GWAS people themselves** (in-sample LD): the ideal, and rarely shared;
-- **a European panel**: the 373 European people of our cohort, who are real Europeans but not the
+- **a European panel**: the 354 European people of our cohort, who are real Europeans but not the
   same Europeans as the GWAS (much like using 1000 Genomes for a UK study);
 - **a small European panel**: 50 of them;
 - **an African panel**: 466 African-ancestry people;
 - **a mixed panel**: the Europeans and the Africans together, like using all of 1000 Genomes.
 
-This is locus L05, where one planted variant has a strong effect on the trait. The top row is the
-GWAS. Each row below is one panel: dots are variants, their height is the PIP, the coloured ones
+This is locus L05, where one planted variant has a strong effect on the trait: it is our strongest
+GWAS hit by far, with a z-score of about 31. The top row is the GWAS. Each row below is one panel: dots are variants, their height is the PIP, the coloured ones
 are in a 95% credible set, and the orange ring marks the real cause from the answer key.
 
 <iframe src="/finemap/R/finemap-panels.html" title="Fine-mapping the same GWAS with LD from five panels" width="100%" height="880" style="border:0;" loading="lazy"></iframe>
 
-With in-sample LD, fine-mapping does exactly what we want: one credible set, one variant, and it
-is the real cause. The European panel also finds it, but adds a second credible set out of nothing.
-The small panel finds the cause and *eight* invented signals. The African panel loses the cause
-completely and puts ten confident credible sets in the wrong places. And the mixed panel, which
-did so well at imputation, misses the cause and invents nine.
+With in-sample LD, fine-mapping does exactly what we want: one credible set, and it holds the real
+cause. Every borrowed panel does badly here. The European panel finds the cause, but adds *nine*
+credible sets out of nothing. The small panel finds it and invents eight. The African panel loses
+the cause completely and puts ten confident credible sets in the wrong places. And the mixed panel,
+which did so well at imputation, finds the cause and invents nine.
 
-That last one surprised me the first time I saw it. For imputation, more people is more choice.
-For LD, a mixed panel is simply a different population, one that matches nobody: its LD is a blend
-that no real GWAS has.
+The European panel is the one that surprised me. These are real Europeans, and at most loci, as
+you'll see in a moment, they do a decent job. But at a signal this strong, the small differences
+between their LD and the GWAS people's LD are blown up into "evidence" for extra causal variants,
+and SuSiE dutifully reports them. The mixed panel is a different lesson. For imputation, more
+people is more choice. For LD, a mixed panel is simply a different population, one that matches
+nobody: its LD is a blend that no real GWAS has.
 
 One locus is one story, so here is the scorecard across every locus that had a GWAS hit:
 
 <iframe src="/finemap/R/scorecard.html" title="Across all loci: real causes caught and false credible sets, by LD panel" width="100%" height="340" style="border:0;" loading="lazy"></iframe>
 
-The pattern holds. In-sample LD catches 7 of the 8 real causes with no false signals. A large
-matched panel comes close. Everything else loses real causes and, worse, hands you confident false
-ones. And look at the last row: perfect in-sample LD, with just one variant whose alleles were
-swapped in the summary statistics. That single bookkeeping error is enough to break most loci.
-This is why fine-mapping papers ask for in-sample LD, and why the stronger your GWAS, the more an
-imperfect panel hurts: tiny LD errors don't matter for z = 3, but they matter a lot for z = 20.
+Across the eight loci there are nine real causes. In-sample LD catches all nine, with no false
+credible sets at all. The European panel catches eight, and away from L05 it is mostly fine: no
+false sets at three loci, one at three more, two at the last, for five in all (plus the nine at
+L05). Everything else loses real causes and, worse, hands you confident false ones: the mixed
+panel invents 30 credible sets, the African panel 63, and the small European panel 67, more than
+eight per locus. Many of those fits never even settle down: SuSiE stops at its iteration limit
+without converging.
+
+And look at the last row: perfect in-sample LD, with just one variant whose alleles were swapped
+in the summary statistics. That single bookkeeping error breaks *every* locus: not one of the nine
+real causes is found, and 37 false credible sets take their place. This is why fine-mapping papers
+ask for in-sample LD, and why the stronger your GWAS, the more an imperfect panel hurts: tiny LD
+errors don't matter for z = 3, but at z = 31 they invent nine signals.
 
 ## How to tell when a panel doesn't fit
 
@@ -171,13 +186,16 @@ panel's LD, and compare it with what the GWAS actually saw.
 
 <iframe src="/finemap/R/z-check.html" title="Observed versus predicted z-scores, for three LD sources" width="100%" height="410" style="border:0;" loading="lazy"></iframe>
 
-With in-sample LD, every point sits on the diagonal. With the African panel, the predictions are
+With in-sample LD, the points sit on the diagonal. With the African panel, the predictions are
 all over the place, and many variants (orange) are more than four standard deviations from their
 prediction. With the flipped allele, everything fits except one point that sits far off on the
 other side of the diagonal: the flipped variant, with its sign the wrong way round.
 
 Each panel also gets one number, *s*, which measures how much of the z-scores the panel's LD can't
-explain: 0 means a perfect fit, and anything above about 0.1 is a warning. The susieR package
+explain: 0 means a perfect fit, and anything above about 0.1 is a warning. In our runs, in-sample
+LD gives an *s* of essentially 0 at every locus. The European panel ranges from 0.06 to 0.21, and
+the two loci where it went most wrong, L04 and L05, are exactly the two above 0.2. The small and
+African panels sit between 0.3 and 0.7. The susieR package
 calls these tools `estimate_s_rss` and `kriging_rss`, and DENTIST is a stand-alone tool built on
 the same idea. Flagged variants are worth a look: often they are allele flips, strand problems or
 low-quality variants, and removing them helps. A high *s* across the board means the panel itself
@@ -204,8 +222,9 @@ conda activate statgen-r
 bash posts/R-reference-panels/run_all.sh data results/post-R
 ```
 
-and the same in Python with `TRACK=python` in front. It takes 15 to 30 minutes on a laptop-sized
-machine, most of it fine-mapping. `bash posts/R-reference-panels/check.sh data` runs both and
+and the same in Python with `TRACK=python` in front. Give it a machine with 4 cores and 16 GB of
+memory (on a shared cluster, a compute node rather than the login node). Most of the time goes to
+fine-mapping. `bash posts/R-reference-panels/check.sh data` runs both and
 checks that R and Python give the same numbers.
 
 The heart of the fine-mapping experiment is only a few lines. In R, for one locus:
