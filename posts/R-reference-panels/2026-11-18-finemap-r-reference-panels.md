@@ -1,6 +1,6 @@
 ---
 title: "Statistical fine-mapping, post R: reference panels, or borrowing other people's genomes"
-date: 2026-11-21
+date: 2026-11-18
 type: method
 summary: "What a reference panel is, the five jobs it does, and what happens when you borrow from the wrong one: a matched panel fills in missing genomes well, but for fine-mapping only LD from the right people will do, and a mismatched panel quietly invents answers."
 tags: ["fine-mapping", "reference panels", "LD", "imputation", "statistical genetics", "tutorial"]

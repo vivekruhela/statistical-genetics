@@ -41,7 +41,7 @@ For a quick trial on the chromosome 22 test build, add `STATGEN_CONFIG=tests/con
 
 ## On the site
 
-The post is `2026-11-21-finemap-r-reference-panels.md` (goes in `src/content/blog/`). The figures
+The post is `2026-11-18-finemap-r-reference-panels.md` (goes in `src/content/blog/`). The figures
 go in `public/finemap/R/`, using the Python pages, which load plotly.js from a CDN and stay small:
 
 | Page | From |
