@@ -73,10 +73,10 @@ reads about 6.9 million variants), so run it on a compute node, not a cluster's 
 which tends to kill long jobs with a bare `Terminated`. With Slurm:
 
 ```bash
-sbatch simulate/run_all.sbatch data       # log in statgen-build-<jobid>.log
+sbatch --constraint=<node type> simulate/run_all.sbatch data   # log in statgen-build-<jobid>.log
 ```
 
-or interactively, from a shell on a compute node (`srun --mem=14G -c 4 --pty bash`, then
+or interactively, from a shell on a compute node (`srun --constraint=<node type> --mem=14G -c 4 --pty bash`; `sinfo -o "%P %N %f %c %m"` lists the node types, then
 `conda activate statgen-r`):
 
 ```bash

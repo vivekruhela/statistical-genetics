@@ -1,5 +1,6 @@
 #!/usr/bin/env bash
 #SBATCH --job-name=statgen-build
+#SBATCH --constraint=cpu16mem128b
 #SBATCH --cpus-per-task=4
 #SBATCH --mem=14G
 #SBATCH --time=12:00:00
@@ -10,7 +11,9 @@
 #   FROM=05 sbatch simulate/run_all.sbatch data            # resume at step 5, keep steps 0-4
 #   FROM=05 RUN_TESTS=1 sbatch simulate/run_all.sbatch data
 # Follow it with: tail -f statgen-build-<jobid>.log
-# Edit the #SBATCH lines to suit your cluster (add --partition=... if it needs one).
+# On clusters with several instance types, --constraint picks one; without it some clusters give
+# a small default node and reject the job. List yours with: sinfo -o "%P %N %f %c %m"
+# and change it here or on the command line: sbatch --constraint=<feature> simulate/run_all.sbatch data
 set -euo pipefail
 cd "${SLURM_SUBMIT_DIR:-.}"
 source "$(conda info --base)/etc/profile.d/conda.sh"
