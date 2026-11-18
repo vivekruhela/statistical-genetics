@@ -27,7 +27,8 @@ Beagle):
 ```bash
 bash posts/R-reference-panels/run_all.sh data results/post-R               # R track
 TRACK=python bash posts/R-reference-panels/run_all.sh data results/post-R  # Python track
-bash posts/R-reference-panels/check.sh data results/post-R-check           # both, and compare
+PYTHON=$(conda run -n statgen-py which python) \
+  bash posts/R-reference-panels/check.sh data results/post-R-check         # both, and compare
 ```
 
 On a 4-core machine the whole post takes about 15 to 30 minutes: a few minutes of Beagle, a few
