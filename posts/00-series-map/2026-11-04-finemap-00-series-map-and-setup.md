@@ -102,7 +102,7 @@ The same map as a list, in reading order:
 | Post | Part | Question | Planned |
 |---|---|---|---|
 | 0 | Setup | What is fine-mapping for, and how do I set up the code and data? | 4 Nov 2026 |
-| R | Setup | Which reference panel should I use for PCA, imputation, LD or eQTL lookups? | 21 Nov 2026 |
+| R | Setup | Which reference panel should I use for PCA, imputation, LD or eQTL lookups? | 18 Nov 2026 |
 | 1.1 | Data | What files and formats describe one person across genotypes, expression, clinical data and methylation? | 28 Nov 2026 |
 | 1.2 | Data | Which variants and people should I remove, and why? | 5 Dec 2026 |
 | 1.3 | Data | How does ancestry confound association, and how do I correct for it? | 12 Dec 2026 |
